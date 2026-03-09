@@ -6,6 +6,7 @@ import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
+import { inputSchema } from './zod-compat.ts';
 
 export function registerInfrastructureTools(
 	context: ToolRegistrationContext,
@@ -17,7 +18,7 @@ export function registerInfrastructureTools(
 		{
 			description:
 				'Describe a task queue including poller information and backlog status.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -25,9 +26,9 @@ export function registerInfrastructureTools(
 				taskQueue: z
 					.string()
 					.describe('The name of the task queue to describe'),
-			},
+			}),
 		},
-		async ({ profile, taskQueue }, extra) => {
+		async ({ profile, taskQueue }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.task-queue.describe',
 				{ profile, taskQueue },
@@ -74,7 +75,7 @@ export function registerInfrastructureTools(
 		{
 			description:
 				'Get the configuration of a task queue including rate limits and poller settings.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -82,9 +83,9 @@ export function registerInfrastructureTools(
 				taskQueue: z
 					.string()
 					.describe('The name of the task queue to get configuration for'),
-			},
+			}),
 		},
-		async ({ profile, taskQueue }, extra) => {
+		async ({ profile, taskQueue }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.task-queue.configuration',
 				{ profile, taskQueue },
@@ -130,7 +131,7 @@ export function registerInfrastructureTools(
 		'temporal.namespace.list',
 		{
 			description: 'List all namespaces in a self-hosted Temporal cluster.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -141,9 +142,9 @@ export function registerInfrastructureTools(
 					.max(100)
 					.default(100)
 					.describe('Maximum number of namespaces to return'),
-			},
+			}),
 		},
-		async ({ profile, pageSize }, extra) => {
+		async ({ profile, pageSize }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.namespace.list',
 				{ profile, pageSize },
@@ -186,15 +187,15 @@ export function registerInfrastructureTools(
 		'temporal.namespace.describe',
 		{
 			description: 'Get detailed information about a specific namespace.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
 					.describe('Temporal connection profile name'),
 				namespace: z.string().describe('The namespace name to describe'),
-			},
+			}),
 		},
-		async ({ profile, namespace }, extra) => {
+		async ({ profile, namespace }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.namespace.describe',
 				{ profile, namespace },
@@ -241,7 +242,7 @@ export function registerInfrastructureTools(
 		'temporal.search-attributes.list',
 		{
 			description: 'List search attributes configured for a namespace.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -252,9 +253,9 @@ export function registerInfrastructureTools(
 					.describe(
 						'The namespace to list search attributes for (defaults to profile namespace)',
 					),
-			},
+			}),
 		},
-		async ({ profile, namespace }, extra) => {
+		async ({ profile, namespace }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.search-attributes.list',
 				{ profile, namespace },
@@ -304,14 +305,14 @@ export function registerInfrastructureTools(
 		{
 			description:
 				'Get system information about the Temporal cluster including server version and capabilities.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
 					.describe('Temporal connection profile name'),
-			},
+			}),
 		},
-		async ({ profile }, extra) => {
+		async ({ profile }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.cluster.info',
 				{ profile },

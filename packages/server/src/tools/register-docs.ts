@@ -5,6 +5,7 @@ import { buildRequestContext } from '../safety/request-context.ts';
 import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
+import { inputSchema } from './zod-compat.ts';
 
 export function registerDocsTools(context: ToolRegistrationContext): void {
 	const { server, config, auditLogger, taskStore } = context;
@@ -54,7 +55,7 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'Search the Temporal documentation corpus for relevant information.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				query: z.string().describe('The search query'),
 				sdk: z
 					.string()
@@ -68,9 +69,9 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 					.max(50)
 					.default(10)
 					.describe('Maximum number of results to return'),
-			},
+			}),
 		},
-		async ({ query, sdk, limit }, extra) => {
+		async ({ query, sdk, limit }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'docs.search',
 				{ query, sdk, limit },
@@ -126,15 +127,15 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 		'docs.get',
 		{
 			description: 'Get the full content of a specific documentation page.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				sourcePath: z
 					.string()
 					.describe(
 						'The source path of the documentation page to retrieve',
 					),
-			},
+			}),
 		},
-		async ({ sourcePath }, extra) => {
+		async ({ sourcePath }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'docs.get',
 				{ sourcePath },

@@ -6,6 +6,7 @@ import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
+import { inputSchema } from './zod-compat.ts';
 
 export function registerScheduleTools(context: ToolRegistrationContext): void {
 	const { server, connectionManager, config, auditLogger } = context;
@@ -14,7 +15,7 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 		'temporal.schedule.list',
 		{
 			description: 'List schedules from a Temporal cluster.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -25,9 +26,9 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 					.max(100)
 					.default(10)
 					.describe('Maximum number of schedules to return'),
-			},
+			}),
 		},
-		async ({ profile, pageSize }, extra) => {
+		async ({ profile, pageSize }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.schedule.list',
 				{ profile, pageSize },
@@ -70,15 +71,15 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 		'temporal.schedule.describe',
 		{
 			description: 'Get detailed information about a specific schedule.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
 					.describe('Temporal connection profile name'),
 				scheduleId: z.string().describe('The schedule ID to describe'),
-			},
+			}),
 		},
-		async ({ profile, scheduleId }, extra) => {
+		async ({ profile, scheduleId }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.schedule.describe',
 				{ profile, scheduleId },
@@ -121,7 +122,7 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 		'temporal.schedule.matching-times',
 		{
 			description: 'Get the matching times for a schedule within a time range.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -135,11 +136,11 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 				endTime: z
 					.string()
 					.describe('End of the time range (ISO 8601 format)'),
-			},
+			}),
 		},
 		async (
-			{ profile, scheduleId, startTime: rangeStart, endTime: rangeEnd },
-			extra,
+			{ profile, scheduleId, startTime: rangeStart, endTime: rangeEnd }: any,
+			extra: any,
 		) => {
 			const requestContext = buildRequestContext(
 				'temporal.schedule.matching-times',

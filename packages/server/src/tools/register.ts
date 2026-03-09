@@ -4,6 +4,7 @@ import type { TemporalConnectionManager } from '../../../temporal/src/connection
 import { listWorkflows } from '../../../temporal/src/tools/workflow/list.ts';
 import { describeWorkflow } from '../../../temporal/src/tools/workflow/describe.ts';
 import { errorResponse } from './response-helpers.ts';
+import { inputSchema } from './zod-compat.ts';
 
 export function registerTemporalTools(
 	server: McpServer,
@@ -14,7 +15,7 @@ export function registerTemporalTools(
 		{
 			description:
 				'List workflows from a Temporal cluster. Supports visibility query filters.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -31,9 +32,9 @@ export function registerTemporalTools(
 					.max(100)
 					.default(10)
 					.describe('Maximum number of workflows to return'),
-			},
+			}),
 		},
-		async ({ profile, query, pageSize }) => {
+		async ({ profile, query, pageSize }: any) => {
 			try {
 				const client = await connectionManager.getClient(profile);
 				const workflows = await listWorkflows(client, { query, pageSize });
@@ -61,7 +62,7 @@ export function registerTemporalTools(
 		{
 			description:
 				'Get detailed information about a specific workflow execution.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -71,9 +72,9 @@ export function registerTemporalTools(
 					.string()
 					.optional()
 					.describe('Specific run ID (defaults to latest run)'),
-			},
+			}),
 		},
-		async ({ profile, workflowId, runId }) => {
+		async ({ profile, workflowId, runId }: any) => {
 			try {
 				const client = await connectionManager.getClient(profile);
 				const description = await describeWorkflow(client, {

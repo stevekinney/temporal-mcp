@@ -6,6 +6,7 @@ import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
+import { inputSchema } from './zod-compat.ts';
 
 export function registerWorkerTools(context: ToolRegistrationContext): void {
 	const { server, connectionManager, config, auditLogger } = context;
@@ -15,7 +16,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'Get the worker versioning rules for a task queue, including assignment and redirect rules.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -23,9 +24,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				taskQueue: z
 					.string()
 					.describe('The task queue to get versioning rules for'),
-			},
+			}),
 		},
-		async ({ profile, taskQueue }, extra) => {
+		async ({ profile, taskQueue }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.worker.versioning-rules',
 				{ profile, taskQueue },
@@ -72,7 +73,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'Check task reachability for a task queue to determine if workers can receive tasks.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -84,9 +85,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 					.array(z.string())
 					.optional()
 					.describe('Build IDs to check reachability for'),
-			},
+			}),
 		},
-		async ({ profile, taskQueue, buildIds }, extra) => {
+		async ({ profile, taskQueue, buildIds }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.worker.task-reachability',
 				{ profile, taskQueue, buildIds },
@@ -132,7 +133,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 		'temporal.worker.deployment.list',
 		{
 			description: 'List worker deployments in a namespace.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -143,9 +144,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 					.max(100)
 					.default(100)
 					.describe('Maximum number of deployments to return'),
-			},
+			}),
 		},
-		async ({ profile, pageSize }, extra) => {
+		async ({ profile, pageSize }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.worker.deployment.list',
 				{ profile, pageSize },
@@ -191,7 +192,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 		'temporal.worker.deployment.describe',
 		{
 			description: 'Describe a specific worker deployment including its versions.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -199,9 +200,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				deploymentName: z
 					.string()
 					.describe('The deployment name to describe'),
-			},
+			}),
 		},
-		async ({ profile, deploymentName }, extra) => {
+		async ({ profile, deploymentName }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.worker.deployment.describe',
 				{ profile, deploymentName },
@@ -247,7 +248,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 		'temporal.worker.deployment.version.describe',
 		{
 			description: 'Describe a specific version of a worker deployment.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -256,9 +257,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				buildId: z
 					.string()
 					.describe('The build ID of the version to describe'),
-			},
+			}),
 		},
-		async ({ profile, deploymentName, buildId }, extra) => {
+		async ({ profile, deploymentName, buildId }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.worker.deployment.version.describe',
 				{ profile, deploymentName, buildId },
@@ -306,7 +307,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'Check reachability of a worker deployment to determine if it can still receive tasks.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -314,9 +315,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				deploymentName: z
 					.string()
 					.describe('The deployment name to check reachability for'),
-			},
+			}),
 		},
-		async ({ profile, deploymentName }, extra) => {
+		async ({ profile, deploymentName }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.worker.deployment.reachability',
 				{ profile, deploymentName },

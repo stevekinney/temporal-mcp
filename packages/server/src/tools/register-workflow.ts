@@ -6,6 +6,7 @@ import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
+import { inputSchema } from './zod-compat.ts';
 
 function policyGate(
 	context: ToolRegistrationContext,
@@ -45,7 +46,7 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'List workflows from a Temporal cluster. Supports visibility query filters.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -62,9 +63,9 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					.max(100)
 					.default(10)
 					.describe('Maximum number of workflows to return'),
-			},
+			}),
 		},
-		async ({ profile, query, pageSize }, extra) => {
+		async ({ profile, query, pageSize }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.workflow.list',
 				{ profile, query, pageSize },
@@ -100,7 +101,7 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'Get detailed information about a specific workflow execution.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -110,9 +111,9 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					.string()
 					.optional()
 					.describe('Specific run ID (defaults to latest run)'),
-			},
+			}),
 		},
-		async ({ profile, workflowId, runId }, extra) => {
+		async ({ profile, workflowId, runId }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.workflow.describe',
 				{ profile, workflowId, runId },
@@ -147,7 +148,7 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 		'temporal.workflow.count',
 		{
 			description: 'Count workflows matching a visibility query filter.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -156,9 +157,9 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					.string()
 					.optional()
 					.describe('Visibility query filter'),
-			},
+			}),
 		},
-		async ({ profile, query }, extra) => {
+		async ({ profile, query }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.workflow.count',
 				{ profile, query },
@@ -193,7 +194,7 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 		'temporal.workflow.result',
 		{
 			description: 'Get the result of a completed workflow execution.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -205,9 +206,9 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					.string()
 					.optional()
 					.describe('Specific run ID (defaults to latest run)'),
-			},
+			}),
 		},
-		async ({ profile, workflowId, runId }, extra) => {
+		async ({ profile, workflowId, runId }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.workflow.result',
 				{ profile, workflowId, runId },
@@ -243,7 +244,7 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'Query a running workflow execution using a named query handler.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -258,9 +259,9 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					.array(z.unknown())
 					.optional()
 					.describe('Arguments to pass to the query handler'),
-			},
+			}),
 		},
-		async ({ profile, workflowId, runId, queryType, queryArgs }, extra) => {
+		async ({ profile, workflowId, runId, queryType, queryArgs }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.workflow.query',
 				{ profile, workflowId, runId, queryType },
@@ -301,7 +302,7 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'Get the event history of a workflow execution in chronological order.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -313,9 +314,9 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					.string()
 					.optional()
 					.describe('Specific run ID (defaults to latest run)'),
-			},
+			}),
 		},
-		async ({ profile, workflowId, runId }, extra) => {
+		async ({ profile, workflowId, runId }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.workflow.history',
 				{ profile, workflowId, runId },
@@ -351,7 +352,7 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'Get the event history of a workflow execution in reverse chronological order via gRPC.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -366,9 +367,9 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					.max(1000)
 					.default(100)
 					.describe('Maximum number of events to return'),
-			},
+			}),
 		},
-		async ({ profile, workflowId, runId, pageSize }, extra) => {
+		async ({ profile, workflowId, runId, pageSize }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.workflow.history.reverse',
 				{ profile, workflowId, runId, pageSize },
@@ -410,7 +411,7 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 		{
 			description:
 				'Get a summarized view of workflow execution history, focusing on key events.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
@@ -422,9 +423,9 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					.string()
 					.optional()
 					.describe('Specific run ID (defaults to latest run)'),
-			},
+			}),
 		},
-		async ({ profile, workflowId, runId }, extra) => {
+		async ({ profile, workflowId, runId }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.workflow.history.summarize',
 				{ profile, workflowId, runId },

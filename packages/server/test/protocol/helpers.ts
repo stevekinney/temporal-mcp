@@ -6,6 +6,7 @@ import {
 	DEFAULT_APP_CONFIG,
 } from '../../src/config/schema.ts';
 import type { AppConfigContract } from '../../src/contracts/config.ts';
+import { inputSchema } from '../../src/tools/zod-compat.ts';
 
 export interface TestPair {
 	server: CreateServerResult['server'];
@@ -44,11 +45,11 @@ export async function createTestPair(
 		'test.echo',
 		{
 			description: 'Echoes back the message',
-			inputSchema: {
+			inputSchema: inputSchema({
 				message: z.string().describe('Message to echo'),
-			},
+			}),
 		},
-		async ({ message }) => ({
+		async ({ message }: any) => ({
 			content: [{ type: 'text' as const, text: message }],
 		}),
 	);

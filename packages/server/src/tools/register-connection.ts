@@ -6,6 +6,7 @@ import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
+import { inputSchema } from './zod-compat.ts';
 
 export function registerConnectionTools(
 	context: ToolRegistrationContext,
@@ -17,14 +18,14 @@ export function registerConnectionTools(
 		{
 			description:
 				'Check connectivity to a Temporal cluster by fetching system info.',
-			inputSchema: {
+			inputSchema: inputSchema({
 				profile: z
 					.string()
 					.optional()
 					.describe('Temporal connection profile name'),
-			},
+			}),
 		},
-		async ({ profile }, extra) => {
+		async ({ profile }: any, extra: any) => {
 			const requestContext = buildRequestContext(
 				'temporal.connection.check',
 				{ profile },
