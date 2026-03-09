@@ -1,7 +1,10 @@
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ResourceRegistrationContext } from './register.ts';
-
-type Variables = Record<string, string | string[]>;
+import {
+	assertResourcePolicy,
+	getVariable,
+	type ResourceTemplateVariables,
+} from './resource-helpers.ts';
 
 export function registerDocsResources(
 	context: ResourceRegistrationContext,
@@ -18,8 +21,9 @@ export function registerDocsResources(
 				'A documentation page from the Temporal docs corpus',
 			mimeType: 'text/markdown',
 		},
-		async (uri: URL, variables: Variables) => {
-			const sourcePath = String(variables.sourcePath ?? '');
+		async (uri: URL, variables: ResourceTemplateVariables) => {
+			assertResourcePolicy(context, 'docs.get', {});
+			const sourcePath = getVariable(variables, 'sourcePath');
 			const { getDoc } = await import(
 				'../../../docs/src/tools/get.ts'
 			);

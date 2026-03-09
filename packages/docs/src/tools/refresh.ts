@@ -5,6 +5,7 @@ import type { DocChunk } from '../chunking.ts';
 import { createSearchIndex, persistIndex } from '../indexing.ts';
 import { syncDocs } from '../sync.ts';
 import { getDocsStatus } from './status.ts';
+import { persistDocsStatusMetadata } from './status.ts';
 import type { DocsStatus } from './status.ts';
 
 export async function refreshDocs(): Promise<DocsStatus> {
@@ -28,6 +29,7 @@ export async function refreshDocs(): Promise<DocsStatus> {
 				.filter((sdk): sdk is string => sdk !== null),
 		),
 	];
+	await persistDocsStatusMetadata(sourcePaths.length, sdkFilter);
 	return getDocsStatus(sourcePaths.length, sdkFilter);
 }
 

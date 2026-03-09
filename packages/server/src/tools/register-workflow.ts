@@ -6,10 +6,12 @@ import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
+import type { RequestContext } from '../safety/request-context.ts';
 import { inputSchema } from './zod-compat.ts';
 
 function policyGate(
 	context: ToolRegistrationContext,
+	requestContext: RequestContext,
 	toolName: string,
 	profile: string | undefined,
 	namespace?: string,
@@ -18,13 +20,7 @@ function policyGate(
 	if (!contract) return null;
 	const policyScope = resolveTemporalPolicyScope(context, profile, namespace);
 	const decision = evaluatePolicy(context.config.policy, contract, policyScope);
-	context.auditLogger.logPolicyDecision(
-		buildRequestContext(toolName, {
-			profile: policyScope.profile,
-			namespace: policyScope.namespace,
-		}),
-		decision,
-	);
+	context.auditLogger.logPolicyDecision(requestContext, decision);
 	if (!decision.allowed) {
 		return errorResponse({
 			ok: false,
@@ -75,7 +71,12 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(context, 'temporal.workflow.list', profile);
+				const blocked = policyGate(
+					context,
+					requestContext,
+					'temporal.workflow.list',
+					profile,
+				);
 				if (blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 					return blocked;
@@ -123,7 +124,12 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(context, 'temporal.workflow.describe', profile);
+				const blocked = policyGate(
+					context,
+					requestContext,
+					'temporal.workflow.describe',
+					profile,
+				);
 				if (blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 					return blocked;
@@ -169,7 +175,12 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(context, 'temporal.workflow.count', profile);
+				const blocked = policyGate(
+					context,
+					requestContext,
+					'temporal.workflow.count',
+					profile,
+				);
 				if (blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 					return blocked;
@@ -218,7 +229,12 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(context, 'temporal.workflow.result', profile);
+				const blocked = policyGate(
+					context,
+					requestContext,
+					'temporal.workflow.result',
+					profile,
+				);
 				if (blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 					return blocked;
@@ -271,7 +287,12 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(context, 'temporal.workflow.query', profile);
+				const blocked = policyGate(
+					context,
+					requestContext,
+					'temporal.workflow.query',
+					profile,
+				);
 				if (blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 					return blocked;
@@ -326,7 +347,12 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(context, 'temporal.workflow.history', profile);
+				const blocked = policyGate(
+					context,
+					requestContext,
+					'temporal.workflow.history',
+					profile,
+				);
 				if (blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 					return blocked;
@@ -379,7 +405,12 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(context, 'temporal.workflow.history.reverse', profile);
+				const blocked = policyGate(
+					context,
+					requestContext,
+					'temporal.workflow.history.reverse',
+					profile,
+				);
 				if (blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 					return blocked;
@@ -437,6 +468,7 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			try {
 				const blocked = policyGate(
 					context,
+					requestContext,
 					'temporal.workflow.history.summarize',
 					profile,
 				);

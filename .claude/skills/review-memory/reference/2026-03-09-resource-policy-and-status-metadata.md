@@ -1,0 +1,3 @@
+- Policy checks in helper functions must reuse the original request context to preserve request IDs and avoid fragmented audit trails.
+- Status endpoints that summarize indexed data should persist summary metadata at index-build time so they can report accurate counts without recomputing.
+- Any read surface that exposes Temporal payloads (tools or resources) must enforce the same policy gates and redaction guarantees.

@@ -1,7 +1,11 @@
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ResourceRegistrationContext } from './register.ts';
-
-type Variables = Record<string, string | string[]>;
+import {
+	assertResourcePolicy,
+	getVariable,
+	jsonResourceContent,
+	type ResourceTemplateVariables,
+} from './resource-helpers.ts';
 
 export function registerScheduleResources(
 	context: ResourceRegistrationContext,
@@ -17,19 +21,24 @@ export function registerScheduleResources(
 			description: 'A Temporal schedule',
 			mimeType: 'application/json',
 		},
-		async (uri: URL, variables: Variables) => {
-			const profile = String(variables.profile ?? '');
-			const scheduleId = String(variables.scheduleId ?? '');
-			const client = await connectionManager.getClient(profile);
+		async (uri: URL, variables: ResourceTemplateVariables) => {
+			const profile = getVariable(variables, 'profile');
+			const scheduleId = getVariable(variables, 'scheduleId');
+			const effectiveProfile =
+				connectionManager.resolveProfileName(profile || undefined);
+			const profileConfiguration =
+				connectionManager.getProfileConfiguration(effectiveProfile);
+			assertResourcePolicy(context, 'temporal.schedule.describe', {
+				profile: effectiveProfile,
+				namespace: profileConfiguration.namespace,
+			});
+
+			const client = await connectionManager.getClient(effectiveProfile);
 			const handle = client.schedule.getHandle(scheduleId);
 			const description = await handle.describe();
 			return {
 				contents: [
-					{
-						uri: uri.href,
-						mimeType: 'application/json',
-						text: JSON.stringify(description, null, 2),
-					},
+					jsonResourceContent(uri, description),
 				],
 			};
 		},

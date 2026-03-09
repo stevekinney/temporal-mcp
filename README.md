@@ -261,11 +261,9 @@ Every tool invocation is logged as structured JSON to stderr, including the tool
 
 ### Sensitive field redaction
 
-Tool responses are automatically scanned for sensitive fields. Any key matching one of these patterns (case-insensitive) has its value replaced with `[REDACTED]`:
+Tool responses and JSON resource responses are automatically scanned for sensitive fields. Any key matching one of these patterns (case-insensitive) has its value replaced with `[REDACTED]`:
 
 `apiKey`, `password`, `token`, `secret`, `credential`, `authorization`, `cookie`, `session`
-
-Resource URI reads are currently returned as raw JSON and should be treated as unredacted.
 
 ### What this server does not do
 
