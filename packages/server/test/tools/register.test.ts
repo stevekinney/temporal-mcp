@@ -18,7 +18,7 @@ const config: TemporalConfig = {
 
 describe('registerTemporalTools', () => {
 	test('registers two tools on the server', () => {
-		const server = createServer({ config: DEFAULT_APP_CONFIG });
+		const { server } = createServer({ config: DEFAULT_APP_CONFIG });
 		const manager = new TemporalConnectionManager(config);
 		registerTemporalTools(server, manager);
 	});

@@ -7,7 +7,7 @@ import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 
 export function registerDocsTools(context: ToolRegistrationContext): void {
-	const { server, config, auditLogger } = context;
+	const { server, config, auditLogger, taskStore } = context;
 
 	server.registerTool(
 		'docs.status',
@@ -171,6 +171,16 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 		},
 	);
 
+	if (config.mcp.capabilities.tasks && taskStore) {
+		registerDocsRefreshWithTasks(context);
+	} else {
+		registerDocsRefreshSynchronous(context);
+	}
+}
+
+function registerDocsRefreshSynchronous(context: ToolRegistrationContext): void {
+	const { server, config, auditLogger } = context;
+
 	server.registerTool(
 		'docs.refresh',
 		{
@@ -179,11 +189,7 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 			inputSchema: {},
 		},
 		async (_args, extra) => {
-			const requestContext = buildRequestContext(
-				'docs.refresh',
-				{},
-				extra,
-			);
+			const requestContext = buildRequestContext('docs.refresh', {}, extra);
 			auditLogger.logToolCall(requestContext, {});
 			const startTime = Date.now();
 
@@ -214,4 +220,77 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 			}
 		},
 	);
+}
+
+function registerDocsRefreshWithTasks(context: ToolRegistrationContext): void {
+	const { server, config, auditLogger, taskStore } = context;
+
+	server.experimental.tasks.registerToolTask(
+		'docs.refresh',
+		{
+			description:
+				'Refresh the local Temporal documentation corpus by syncing with the latest docs.',
+			execution: { taskSupport: 'optional' as const },
+		},
+		{
+			// No inputSchema → SDK calls createTask(extra) with one arg
+			createTask: async (extra: any) => {
+				const requestContext = buildRequestContext('docs.refresh', {}, extra);
+				auditLogger.logToolCall(requestContext, {});
+
+				const contract = getToolContract('docs.refresh');
+				if (contract) {
+					const decision = evaluatePolicy(config.policy, contract, {});
+					auditLogger.logPolicyDecision(requestContext, decision);
+					if (!decision.allowed) {
+						auditLogger.logToolResult(requestContext, 'error', 0);
+						return errorResponse({
+							ok: false,
+							error: { code: decision.code, message: decision.reason, retryable: false },
+						}) as any;
+					}
+				}
+
+				const ttl = config.security.maxTaskTtlSec * 1000;
+				const task = await extra.taskStore.createTask({ ttl });
+
+				// Kick off background refresh
+				runBackgroundRefresh(task.taskId, taskStore!, auditLogger, requestContext);
+
+				return { task };
+			},
+			getTask: async (extra: any) => {
+				const task = await extra.taskStore.getTask(extra.taskId);
+				return { task: task! };
+			},
+			getTaskResult: async (extra: any) => {
+				return extra.taskStore.getTaskResult(extra.taskId);
+			},
+		},
+	);
+}
+
+function runBackgroundRefresh(
+	taskId: string,
+	taskStore: NonNullable<ToolRegistrationContext['taskStore']>,
+	auditLogger: ToolRegistrationContext['auditLogger'],
+	requestContext: ReturnType<typeof buildRequestContext>,
+): void {
+	const startTime = Date.now();
+
+	(async () => {
+		try {
+			const { refreshDocs } = await import(
+				'../../../docs/src/tools/refresh.ts'
+			);
+			const status = await refreshDocs();
+			const result = successResponse(redactSensitiveFields(status));
+			await taskStore.storeTaskResult(taskId, 'completed', result);
+			auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
+		} catch (error) {
+			const result = errorResponse(error);
+			await taskStore.storeTaskResult(taskId, 'failed', result);
+			auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+		}
+	})();
 }

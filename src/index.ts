@@ -13,10 +13,10 @@ async function main() {
 	const config = await loadConfiguration();
 
 	const connectionManager = new TemporalConnectionManager(config.temporal);
-	const server = createServer({ config });
+	const { server, taskStore } = createServer({ config });
 	const auditLogger = new AuditLogger();
 
-	registerAllTools({ server, connectionManager, config, auditLogger });
+	registerAllTools({ server, connectionManager, config, auditLogger, taskStore });
 	registerAllResources({ server, connectionManager, config });
 
 	const transport = new StdioServerTransport();

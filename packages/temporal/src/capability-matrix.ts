@@ -112,7 +112,7 @@ export const TOOL_CONTRACTS: ReadonlyMap<string, ToolContract> = new Map([
 	contract('docs.status', { supportsCancellation: false }),
 	contract('docs.search', { supportsCancellation: false }),
 	contract('docs.get', { supportsCancellation: false }),
-	contract('docs.refresh', { supportsCancellation: false }),
+	contract('docs.refresh', { supportsCancellation: false, supportsTasks: true }),
 ]);
 
 export function getToolContract(name: string): ToolContract | undefined {

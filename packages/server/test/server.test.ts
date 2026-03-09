@@ -3,15 +3,15 @@ import { createServer } from '../src/server.ts';
 import { DEFAULT_APP_CONFIG } from '../src/config/schema.ts';
 
 describe('createServer', () => {
-	test('returns an McpServer instance', () => {
-		const server = createServer({ config: DEFAULT_APP_CONFIG });
+	test('returns an McpServer instance and task store', () => {
+		const { server, taskStore } = createServer({ config: DEFAULT_APP_CONFIG });
 		expect(server).toBeDefined();
 		expect(server.connect).toBeFunction();
+		expect(taskStore).toBeDefined();
 	});
 
 	test('sets tool capabilities with listChanged', () => {
-		const server = createServer({ config: DEFAULT_APP_CONFIG });
-		// Verify the server was created successfully (capabilities are internal)
+		const { server } = createServer({ config: DEFAULT_APP_CONFIG });
 		expect(server).toBeDefined();
 	});
 
@@ -22,7 +22,7 @@ describe('createServer', () => {
 				capabilities: { ...DEFAULT_APP_CONFIG.mcp.capabilities, roots: true },
 			},
 		};
-		const server = createServer({ config });
+		const { server } = createServer({ config });
 		expect(server).toBeDefined();
 	});
 
@@ -33,7 +33,19 @@ describe('createServer', () => {
 				capabilities: { ...DEFAULT_APP_CONFIG.mcp.capabilities, roots: false },
 			},
 		};
-		const server = createServer({ config });
+		const { server } = createServer({ config });
 		expect(server).toBeDefined();
+	});
+
+	test('returns undefined taskStore when tasks disabled', () => {
+		const config = {
+			...DEFAULT_APP_CONFIG,
+			mcp: {
+				capabilities: { ...DEFAULT_APP_CONFIG.mcp.capabilities, tasks: false },
+			},
+		};
+		const { server, taskStore } = createServer({ config });
+		expect(server).toBeDefined();
+		expect(taskStore).toBeUndefined();
 	});
 });

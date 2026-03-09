@@ -1,4 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { InMemoryTaskStore } from '@modelcontextprotocol/sdk/experimental/tasks';
 import type { TemporalConnectionManager } from '../../../temporal/src/connection.ts';
 import type { AppConfigContract } from '../contracts/config.ts';
 import { AuditLogger } from '../safety/audit-log.ts';
@@ -14,6 +15,7 @@ export interface ToolRegistrationContext {
 	connectionManager: TemporalConnectionManager;
 	config: AppConfigContract;
 	auditLogger: AuditLogger;
+	taskStore?: InMemoryTaskStore;
 }
 
 export function registerAllTools(context: ToolRegistrationContext): void {
