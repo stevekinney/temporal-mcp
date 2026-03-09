@@ -116,6 +116,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				);
 				const client = await connectionManager.getClient(profile);
 				const reachability = await getTaskReachability(client, {
+					namespace: policyScope.namespace,
 					taskQueue,
 					buildIds,
 				});

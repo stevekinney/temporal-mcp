@@ -16,11 +16,13 @@ describe('getTaskReachability', () => {
 	test('calls grpc getWorkerTaskReachability with correct params', async () => {
 		const { client, grpcFn } = createMockClient({ buildIdReachability: [] });
 		await getTaskReachability(client, {
+			namespace: 'default',
 			taskQueue: 'my-queue',
 			buildIds: ['v1', 'v2'],
 		});
 
 		expect(grpcFn).toHaveBeenCalledWith({
+			namespace: 'default',
 			buildIds: ['v1', 'v2'],
 			taskQueues: ['my-queue'],
 		});
@@ -28,9 +30,13 @@ describe('getTaskReachability', () => {
 
 	test('defaults buildIds to empty array', async () => {
 		const { client, grpcFn } = createMockClient({ buildIdReachability: [] });
-		await getTaskReachability(client, { taskQueue: 'my-queue' });
+		await getTaskReachability(client, {
+			namespace: 'default',
+			taskQueue: 'my-queue',
+		});
 
 		expect(grpcFn).toHaveBeenCalledWith({
+			namespace: 'default',
 			buildIds: [],
 			taskQueues: ['my-queue'],
 		});
@@ -51,7 +57,10 @@ describe('getTaskReachability', () => {
 			],
 		});
 
-		const result = (await getTaskReachability(client, { taskQueue: 'my-queue' })) as any;
+		const result = (await getTaskReachability(client, {
+			namespace: 'default',
+			taskQueue: 'my-queue',
+		})) as any;
 		expect(result.buildIdReachability).toHaveLength(1);
 		expect(result.buildIdReachability[0].buildId).toBe('v1');
 		expect(result.buildIdReachability[0].taskQueueReachability).toHaveLength(1);
@@ -61,7 +70,10 @@ describe('getTaskReachability', () => {
 
 	test('handles empty reachability response', async () => {
 		const { client } = createMockClient({ buildIdReachability: [] });
-		const result = (await getTaskReachability(client, { taskQueue: 'my-queue' })) as any;
+		const result = (await getTaskReachability(client, {
+			namespace: 'default',
+			taskQueue: 'my-queue',
+		})) as any;
 		expect(result.buildIdReachability).toEqual([]);
 	});
 });

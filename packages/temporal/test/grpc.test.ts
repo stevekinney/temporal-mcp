@@ -200,6 +200,31 @@ describe('getTaskQueueConfiguration', () => {
 		});
 	});
 
+	test('preserves zero-valued configuration fields', async () => {
+		const client = createMockClient({
+			workflowService: {
+				describeTaskQueue: mock(() =>
+					Promise.resolve({
+						maxTasksPerSecond: 0,
+						pollerConfiguration: {
+							maximumPollersCount: 0,
+						},
+					}),
+				),
+			},
+		});
+
+		const result = await getTaskQueueConfiguration(client, {
+			namespace: 'default',
+			taskQueue: 'my-queue',
+		});
+
+		expect(result.maxTasksPerSecond).toBe(0);
+		expect(result.pollerConfiguration).toEqual({
+			maximumPollersCount: 0,
+		});
+	});
+
 	test('handles missing configuration gracefully', async () => {
 		const client = createMockClient();
 		const result = await getTaskQueueConfiguration(client, {
@@ -562,6 +587,34 @@ describe('getWorkerVersioningRules', () => {
 		expect(result.redirectRules[0]!.sourceBuildId).toBe('v1');
 		expect(result.redirectRules[0]!.targetBuildId).toBe('v2');
 		expect(result.conflictToken).toBe('abc123');
+	});
+
+	test('preserves a zero ramp percentage', async () => {
+		const client = createMockClient({
+			workflowService: {
+				getWorkerVersioningRules: mock(() =>
+					Promise.resolve({
+						assignmentRules: [
+							{
+								rule: {
+									targetBuildId: 'v2',
+									percentageRamp: {
+										rampPercentage: 0,
+									},
+								},
+							},
+						],
+					}),
+				),
+			},
+		});
+
+		const result = await getWorkerVersioningRules(client, {
+			namespace: 'default',
+			taskQueue: 'my-queue',
+		});
+
+		expect(result.assignmentRules[0]!.percentageRamp).toBe(0);
 	});
 
 	test('handles empty versioning rules', async () => {

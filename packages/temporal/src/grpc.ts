@@ -1,5 +1,9 @@
 import type { Client } from '@temporalio/client';
 
+function toNumberOrNull(value: unknown): number | null {
+	return value === null || value === undefined ? null : Number(value);
+}
+
 // --- Task Queue ---
 
 export interface TaskQueuePoller {
@@ -86,18 +90,12 @@ export async function getTaskQueueConfiguration(
 
 	return {
 		taskQueue: params.taskQueue,
-		maxTasksPerSecond: response.maxTasksPerSecond
-			? Number(response.maxTasksPerSecond)
-			: null,
+		maxTasksPerSecond: toNumberOrNull(response.maxTasksPerSecond),
 		pollerConfiguration: response.pollerConfiguration
 			? {
-					maximumPollersCount: response.pollerConfiguration
-						.maximumPollersCount
-						? Number(
-								response.pollerConfiguration
-									.maximumPollersCount,
-							)
-						: null,
+					maximumPollersCount: toNumberOrNull(
+						response.pollerConfiguration.maximumPollersCount,
+					),
 				}
 			: null,
 	};
@@ -305,9 +303,9 @@ export async function getWorkerVersioningRules(
 	return {
 		assignmentRules: (response.assignmentRules ?? []).map((rule: any) => ({
 			targetBuildId: rule.rule?.targetBuildId ?? '',
-			percentageRamp: rule.rule?.percentageRamp?.rampPercentage
-				? Number(rule.rule.percentageRamp.rampPercentage)
-				: null,
+			percentageRamp: toNumberOrNull(
+				rule.rule?.percentageRamp?.rampPercentage,
+			),
 			createTime: rule.createTime?.seconds
 				? new Date(
 						Number(rule.createTime.seconds) * 1000,
