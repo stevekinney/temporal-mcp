@@ -49,8 +49,8 @@ describe('listWorkflows', () => {
 		const client = createMockClient(workflows);
 		const result = await listWorkflows(client, { pageSize: 10 });
 		expect(result).toHaveLength(2);
-		expect(result[0].workflowId).toBe('wf-1');
-		expect(result[1].workflowId).toBe('wf-2');
+		expect(result[0]!.workflowId).toBe('wf-1');
+		expect(result[1]!.workflowId).toBe('wf-2');
 	});
 
 	test('truncates results at the pageSize boundary', async () => {
@@ -60,7 +60,7 @@ describe('listWorkflows', () => {
 		const client = createMockClient(workflows);
 		const result = await listWorkflows(client, { pageSize: 3 });
 		expect(result).toHaveLength(3);
-		expect(result[2].workflowId).toBe('wf-2');
+		expect(result[2]!.workflowId).toBe('wf-2');
 	});
 
 	test('passes query option through to client.workflow.list()', async () => {
@@ -81,14 +81,14 @@ describe('listWorkflows', () => {
 	test('maps closeTime to null when absent', async () => {
 		const client = createMockClient([makeWorkflow({ closeTime: null })]);
 		const result = await listWorkflows(client, { pageSize: 10 });
-		expect(result[0].closeTime).toBeNull();
+		expect(result[0]!.closeTime).toBeNull();
 	});
 
 	test('maps closeTime to ISO string when present', async () => {
 		const closeTime = new Date('2026-01-02T12:00:00Z');
 		const client = createMockClient([makeWorkflow({ closeTime })]);
 		const result = await listWorkflows(client, { pageSize: 10 });
-		expect(result[0].closeTime).toBe('2026-01-02T12:00:00.000Z');
+		expect(result[0]!.closeTime).toBe('2026-01-02T12:00:00.000Z');
 	});
 
 	test('converts status.name to a string', async () => {
@@ -96,7 +96,7 @@ describe('listWorkflows', () => {
 			makeWorkflow({ status: { name: 'COMPLETED' } }),
 		]);
 		const result = await listWorkflows(client, { pageSize: 10 });
-		expect(result[0].status).toBe('COMPLETED');
-		expect(typeof result[0].status).toBe('string');
+		expect(result[0]!.status).toBe('COMPLETED');
+		expect(typeof result[0]!.status).toBe('string');
 	});
 });

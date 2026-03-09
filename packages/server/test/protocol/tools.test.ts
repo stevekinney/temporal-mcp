@@ -34,8 +34,8 @@ describe('protocol / tools', () => {
 		});
 		expect(result.content).toBeArray();
 		const content = result.content as Array<{ type: string; text: string }>;
-		expect(content[0].type).toBe('text');
-		expect(content[0].text).toBe('hello');
+		expect(content[0]!.type).toBe('text');
+		expect(content[0]!.text).toBe('hello');
 	});
 
 	test('callTool test.error returns isError true', async () => {

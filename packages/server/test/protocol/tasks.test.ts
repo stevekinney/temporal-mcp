@@ -50,7 +50,7 @@ describe('protocol / tasks', () => {
 
 		const tasks = await pair.client.experimental.tasks.listTasks();
 		expect(tasks.tasks.length).toBeGreaterThanOrEqual(1);
-		const task = tasks.tasks[0];
+		const task = tasks.tasks[0]!;
 		expect(task.taskId).toBeDefined();
 		expect(task.status).toBeDefined();
 		expect(task.createdAt).toBeDefined();
@@ -74,7 +74,7 @@ describe('protocol / tasks', () => {
 
 		const tasks = await pair.client.experimental.tasks.listTasks();
 		expect(tasks.tasks.length).toBeGreaterThanOrEqual(1);
-		const task = tasks.tasks[0];
+		const task = tasks.tasks[0]!;
 		const taskStatus = await pair.client.experimental.tasks.getTask(
 			task.taskId,
 		);
@@ -92,13 +92,12 @@ describe('protocol / tasks', () => {
 				execution: { taskSupport: 'optional' as const },
 			},
 			{
-				// No inputSchema → SDK calls handlers with one arg (extra)
-				createTask: async (extra: any) => {
+				createTask: async (extra: any): Promise<any> => {
 					const task = await extra.taskStore.createTask({ ttl: 60_000 });
 					// Don't complete this task — leave it running
 					return { task };
 				},
-				getTask: async (extra: any) => {
+				getTask: async (extra: any): Promise<any> => {
 					const task = await extra.taskStore.getTask(extra.taskId);
 					return { task: task! };
 				},

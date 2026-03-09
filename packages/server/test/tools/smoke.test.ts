@@ -33,7 +33,7 @@ async function isTemporalReachable(): Promise<boolean> {
 describe('End-to-end smoke test', () => {
 	let process: ReturnType<typeof Bun.spawn> | null = null;
 	let configPath: string;
-	let reader: ReadableStreamDefaultReader<string>;
+	let reader: { read(): Promise<{ value: string | undefined; done: boolean }> };
 	let available = false;
 
 	beforeAll(async () => {
@@ -66,9 +66,9 @@ describe('End-to-end smoke test', () => {
 			stderr: 'inherit',
 		});
 
-		reader = process.stdout
-			.pipeThrough(new TextDecoderStream())
-			.getReader();
+		const stdout = process.stdout as ReadableStream<Uint8Array>;
+		const textStream = stdout.pipeThrough(new TextDecoderStream() as any);
+		reader = textStream.getReader() as any;
 
 		// Give the server a moment to start
 		await Bun.sleep(500);
@@ -96,8 +96,9 @@ describe('End-to-end smoke test', () => {
 
 	async function send(message: object): Promise<void> {
 		const line = JSON.stringify(message) + '\n';
-		process!.stdin.write(line);
-		await process!.stdin.flush();
+		const stdin = process!.stdin as import('bun').FileSink;
+		stdin.write(line);
+		await stdin.flush();
 	}
 
 	async function readResponse(timeoutMs = 5000): Promise<any> {
@@ -124,7 +125,7 @@ describe('End-to-end smoke test', () => {
 					}
 				}
 				// Keep the last incomplete line in the buffer
-				buffer = lines[lines.length - 1];
+				buffer = lines[lines.length - 1] ?? '';
 			}
 		}
 		throw new Error(`Timed out waiting for response after ${timeoutMs}ms`);

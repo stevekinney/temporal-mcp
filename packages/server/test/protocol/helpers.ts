@@ -74,8 +74,7 @@ export async function createTestPair(
 				execution: { taskSupport: 'optional' as const },
 			},
 			{
-				// No inputSchema → SDK calls createTask(extra) with one arg
-				createTask: async (extra: any) => {
+				createTask: async (extra: any): Promise<any> => {
 					const task = await extra.taskStore.createTask({ ttl: 60_000 });
 
 					// Complete in background after a short delay
@@ -96,7 +95,7 @@ export async function createTestPair(
 
 					return { task };
 				},
-				getTask: async (extra: any) => {
+				getTask: async (extra: any): Promise<any> => {
 					const task = await extra.taskStore.getTask(extra.taskId);
 					return { task: task! };
 				},

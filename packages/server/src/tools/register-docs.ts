@@ -233,8 +233,7 @@ function registerDocsRefreshWithTasks(context: ToolRegistrationContext): void {
 			execution: { taskSupport: 'optional' as const },
 		},
 		{
-			// No inputSchema → SDK calls createTask(extra) with one arg
-			createTask: async (extra: any) => {
+			createTask: async (extra: any): Promise<any> => {
 				const requestContext = buildRequestContext('docs.refresh', {}, extra);
 				auditLogger.logToolCall(requestContext, {});
 
@@ -247,7 +246,7 @@ function registerDocsRefreshWithTasks(context: ToolRegistrationContext): void {
 						return errorResponse({
 							ok: false,
 							error: { code: decision.code, message: decision.reason, retryable: false },
-						}) as any;
+						});
 					}
 				}
 
@@ -259,7 +258,7 @@ function registerDocsRefreshWithTasks(context: ToolRegistrationContext): void {
 
 				return { task };
 			},
-			getTask: async (extra: any) => {
+			getTask: async (extra: any): Promise<any> => {
 				const task = await extra.taskStore.getTask(extra.taskId);
 				return { task: task! };
 			},

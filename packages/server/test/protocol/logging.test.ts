@@ -40,7 +40,7 @@ describe('protocol / logging', () => {
 		await Bun.sleep(50);
 
 		expect(messages.length).toBeGreaterThanOrEqual(1);
-		expect(messages[0].level).toBe('info');
-		expect(messages[0].data).toBe('test log message');
+		expect(messages[0]!.level).toBe('info');
+		expect(messages[0]!.data).toBe('test log message');
 	});
 });
