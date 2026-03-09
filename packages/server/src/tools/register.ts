@@ -1,8 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
 import type { TemporalConnectionManager } from '../../../temporal/src/connection.ts';
-import { listWorkflows } from '../../../temporal/src/tools/workflow-list.ts';
-import { describeWorkflow } from '../../../temporal/src/tools/workflow-describe.ts';
+import { listWorkflows } from '../../../temporal/src/tools/workflow/list.ts';
+import { describeWorkflow } from '../../../temporal/src/tools/workflow/describe.ts';
 import type { ErrorEnvelope } from '../contracts/error-envelope.ts';
 
 function errorResponse(error: unknown) {

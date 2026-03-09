@@ -11,6 +11,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@temporalio/client": "^1.15.0",
+    "minisearch": "^7.2.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

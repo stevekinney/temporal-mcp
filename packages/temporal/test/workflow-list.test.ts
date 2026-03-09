@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { Client } from '@temporalio/client';
-import { listWorkflows } from '../src/tools/workflow-list.ts';
+import { listWorkflows } from '../src/tools/workflow/list.ts';
 
 interface MockWorkflow {
 	workflowId: string;

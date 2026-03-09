@@ -43,6 +43,15 @@ describe('config contract types', () => {
         codecAllowlist: ['https://codec.internal.example'],
         idempotencyWindowSec: 600,
       },
+      policy: {
+        mode: 'readOnly',
+        hardReadOnly: false,
+        allowedProfiles: [],
+        allowedNamespaces: [],
+        allowPatterns: [],
+        denyPatterns: [],
+        breakGlassVariable: 'TEMPORAL_MCP_BREAK_GLASS',
+      },
     };
 
     const devProfile = config.temporal.profiles.dev;

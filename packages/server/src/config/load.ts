@@ -54,6 +54,18 @@ const appConfigSchema = z.object({
 		})
 		.partial()
 		.optional(),
+	policy: z
+		.object({
+			mode: z.enum(['readOnly', 'safeWrite', 'custom', 'unsafe']),
+			hardReadOnly: z.boolean(),
+			allowedProfiles: z.array(z.string()),
+			allowedNamespaces: z.array(z.string()),
+			allowPatterns: z.array(z.string()),
+			denyPatterns: z.array(z.string()),
+			breakGlassVariable: z.string(),
+		})
+		.partial()
+		.optional(),
 });
 
 type PartialAppConfig = z.infer<typeof appConfigSchema>;
@@ -91,6 +103,10 @@ function deepMerge(
 		security: {
 			...base.security,
 			...override.security,
+		},
+		policy: {
+			...base.policy,
+			...override.policy,
 		},
 	};
 }

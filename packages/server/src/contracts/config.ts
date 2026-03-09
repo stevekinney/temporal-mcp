@@ -1,3 +1,5 @@
+import type { PolicyConfig } from './policy.ts';
+
 export type ProfileKind = 'self-hosted' | 'cloud';
 
 export interface McpCapabilitiesConfig {
@@ -49,4 +51,5 @@ export interface AppConfigContract {
   transport: TransportConfig;
   temporal: TemporalConfig;
   security: SecurityConfig;
+  policy: PolicyConfig;
 }

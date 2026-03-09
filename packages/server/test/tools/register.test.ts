@@ -3,6 +3,7 @@ import { createServer } from '../../src/server.ts';
 import { TemporalConnectionManager } from '../../../temporal/src/connection.ts';
 import { registerTemporalTools } from '../../src/tools/register.ts';
 import type { TemporalConfig } from '../../src/contracts/config.ts';
+import { DEFAULT_APP_CONFIG } from '../../src/config/schema.ts';
 
 const config: TemporalConfig = {
 	defaultProfile: 'test',
@@ -17,7 +18,7 @@ const config: TemporalConfig = {
 
 describe('registerTemporalTools', () => {
 	test('registers two tools on the server', () => {
-		const server = createServer();
+		const server = createServer({ config: DEFAULT_APP_CONFIG });
 		const manager = new TemporalConnectionManager(config);
 		registerTemporalTools(server, manager);
 	});

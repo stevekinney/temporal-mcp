@@ -1685,31 +1685,52 @@ Critical path: `N1 -> N2 -> N3 -> N8 -> N11 -> N12 -> N13 -> N14`
 - [x] Contract compliance tests — config, error envelope, tool contract, version, barrel exports (`packages/server/test/contracts/`)
 - [x] Configuration tests — loader behavior, schema defaults (`packages/server/test/config/`)
 - [x] Server factory test (`packages/server/test/server.test.ts`)
+- [x] Server capabilities — `createServer` accepts `AppConfigContract`, sets `tools.listChanged`, `logging`, conditional `roots`, and server instructions (`packages/server/src/server.ts`)
+- [x] MCP logging wrapper — `McpLogger` class wrapping `server.sendLoggingMessage()` with stderr fallback (`packages/server/src/logging.ts`)
+- [x] Policy engine — `PolicyConfig` types, `evaluatePolicy()` pure function, `matchesPattern()` glob matching, `ToolRegistry` class (`packages/server/src/policy/`, `packages/server/src/contracts/policy.ts`, `packages/server/src/tools/registry.ts`)
+- [x] Capability matrix — static `TOOL_CONTRACTS` map for all 27 R1 tools, `assertToolAvailable()` with profile-kind routing guards (`packages/temporal/src/capability-matrix.ts`)
+- [x] Raw gRPC helpers — 13 typed wrappers for `workflowService`/`operatorService` proto calls (`packages/temporal/src/grpc.ts`)
+- [x] Cloud API stubs — placeholder error envelopes for unimplemented cloud operations (`packages/temporal/src/cloud.ts`)
+- [x] Docs subsystem — `@temporal-mcp/docs` package with sync, SDK detection, heading-aware chunking, MiniSearch indexing, status/search/get/refresh tools (`packages/docs/`)
+- [x] Workflow tools — `count`, `result`, `query`, `history`, `history.reverse`, `history.summarize` (`packages/temporal/src/tools/workflow/`)
+- [x] Schedule tools — `list`, `describe`, `matching-times` (`packages/temporal/src/tools/schedule/`)
+- [x] Infrastructure tools — task queue describe/config, namespace list/describe, search attributes list, cluster info (`packages/temporal/src/tools/infrastructure/`)
+- [x] Worker tools — versioning rules, task reachability, deployment list/describe/version/reachability (`packages/temporal/src/tools/worker/`)
+- [x] Connection check tool — `checkConnection()` via `getSystemInfo` (`packages/temporal/src/tools/connection-check.ts`)
+- [x] Safety hardening — `RequestContext`, `AuditLogger`, `redactSensitiveFields()` (`packages/server/src/safety/`)
+- [x] Response helpers — extracted `errorResponse()`, `successResponse()`, `isErrorEnvelope()` (`packages/server/src/tools/response-helpers.ts`)
+- [x] Tool registration refactor — family-based registration with policy guard + audit pipeline (`packages/server/src/tools/register-all.ts`, `register-workflow.ts`, `register-schedule.ts`, `register-infrastructure.ts`, `register-worker.ts`, `register-connection.ts`, `register-docs.ts`)
+- [x] Resource templates — workflow, schedule, task queue, namespace, docs URI templates (`packages/server/src/resources/`)
+- [x] Inline threshold — 32KB threshold check for large responses with summary + URI fallback (`packages/server/src/resources/inline-threshold.ts`)
+- [x] Elicitation — `requestConfirmation()` with capability detection and graceful degradation (`packages/server/src/elicitation/confirmation.ts`)
+- [x] Roots discovery — `RootsDiscovery` class with listener pattern and cache invalidation (`packages/server/src/roots/discovery.ts`)
+- [x] Payload decoder — 3-stage pipeline (JSON → remote codec → fallback), SSRF protection, codec allowlist (`packages/temporal/src/payload-decoder.ts`)
+- [x] Profile configuration access — `getProfileConfiguration()` on `TemporalConnectionManager` (`packages/temporal/src/connection.ts`)
 
 ## Remaining
 
 ### R1 Foundation
 
-- [ ] MCP protocol lifecycle — `initialize` handshake validation, protocol version negotiation, capability negotiation, graceful shutdown
-- [ ] MCP required utilities — `ping`, cancellation (`notifications/cancelled`), progress (`notifications/progress`), pagination semantics, structured logging (`notifications/message`)
-- [ ] Dynamic list notifications — `notifications/tools/list_changed`, `notifications/resources/list_changed`, `notifications/prompts/list_changed`
+- [x] MCP protocol lifecycle — `initialize` handshake validation, protocol version negotiation, capability negotiation, graceful shutdown (SDK handles lifecycle; `createServer` now passes capabilities and instructions)
+- [x] MCP required utilities — `ping`, cancellation (`notifications/cancelled`), progress (`notifications/progress`), pagination semantics, structured logging (`notifications/message`) (SDK handles ping/cancel/progress; `McpLogger` wraps `sendLoggingMessage` for structured audit/policy/connection events)
+- [x] Dynamic list notifications — `notifications/tools/list_changed`, `notifications/resources/list_changed`, `notifications/prompts/list_changed` (SDK handles automatically; `listChanged: true` configured in server capabilities)
 - [ ] Protocol conformance test suite (`packages/server/test/protocol/`)
-- [ ] Capability matrix implementation — backend classification, availability assertions, profile-kind routing guards (`packages/temporal/src/capability-matrix.ts`)
-- [ ] Policy engine — risk gating by mode (`readOnly`, `safeWrite`, `custom`, `unsafe`), `hardReadOnly` override, profile/namespace allowlists, allow/deny tool patterns, break-glass, structured policy errors (`packages/server/src/policy/`)
+- [x] Capability matrix implementation — backend classification, availability assertions, profile-kind routing guards (`packages/temporal/src/capability-matrix.ts`)
+- [x] Policy engine — risk gating by mode (`readOnly`, `safeWrite`, `custom`, `unsafe`), `hardReadOnly` override, profile/namespace allowlists, allow/deny tool patterns, break-glass, structured policy errors (`packages/server/src/policy/`)
 - [ ] Tasks integration — `tasks/list`, `tasks/get`, `tasks/cancel` with TTL and cancellation (`packages/server/src/mcp/tasks.ts`)
-- [ ] Elicitation integration — `elicitation/create` for high-risk confirmations, graceful degradation when host lacks capability (`packages/server/src/mcp/elicitation.ts`)
-- [ ] Roots integration — `roots/list` scanning boundary, `notifications/roots/list_changed` cache invalidation (`packages/server/src/mcp/roots.ts`)
-- [ ] Docs subsystem — corpus sync, SDK detection and filtering, heading-aware chunking, MiniSearch indexing (`packages/docs/`)
-- [ ] Docs MCP tools — `docs.status`, `docs.search`, `docs.get`, `docs.refresh`
-- [ ] Remaining read-only Temporal tools — `temporal.workflow.count`, `temporal.workflow.result`, `temporal.workflow.query`, `temporal.workflow.history.get`, `temporal.workflow.history.getReverse`, `temporal.workflow.history.summarize`
-- [ ] Schedule read tools — `temporal.schedule.list`, `temporal.schedule.describe`, `temporal.schedule.listMatchingTimes`
-- [ ] Infrastructure and metadata read tools — `temporal.taskQueue.describe`, `temporal.taskQueue.config.get`, `temporal.namespace.list`, `temporal.namespace.describe`, `temporal.searchAttributes.list`, `temporal.cluster.info`
-- [ ] Worker versioning and deployment read tools — `temporal.worker.versioningRules.get`, `temporal.worker.taskReachability`, `temporal.worker.deployment.list`, `temporal.worker.deployment.describe`, `temporal.worker.deployment.version.describe`, `temporal.worker.deployment.reachability`
-- [ ] Payload decoding and codec support — default JSON converter, optional remote codec, graceful undecoded fallback, `security.codecAllowlist`, SSRF protection
-- [ ] Resources and resource templates — workflow, schedule, task queue, namespace, docs resource templates, inline threshold handling
-- [ ] Safety hardening — request IDs, structured audit logs, redaction filters, `notifications/message` for policy/audit/connection events
-- [ ] Temporal connectivity check tool — `temporal.connection.check`
-- [ ] Raw gRPC and cloud fallback handlers (`packages/temporal/src/grpc.ts`, `packages/temporal/src/cloud.ts`)
+- [x] Elicitation integration — `elicitation/create` for high-risk confirmations, graceful degradation when host lacks capability (`packages/server/src/elicitation/confirmation.ts`)
+- [x] Roots integration — `roots/list` scanning boundary, `notifications/roots/list_changed` cache invalidation (`packages/server/src/roots/discovery.ts`)
+- [x] Docs subsystem — corpus sync, SDK detection and filtering, heading-aware chunking, MiniSearch indexing (`packages/docs/`)
+- [x] Docs MCP tools — `docs.status`, `docs.search`, `docs.get`, `docs.refresh`
+- [x] Remaining read-only Temporal tools — `temporal.workflow.count`, `temporal.workflow.result`, `temporal.workflow.query`, `temporal.workflow.history`, `temporal.workflow.history.reverse`, `temporal.workflow.history.summarize`
+- [x] Schedule read tools — `temporal.schedule.list`, `temporal.schedule.describe`, `temporal.schedule.matching-times`
+- [x] Infrastructure and metadata read tools — `temporal.task-queue.describe`, `temporal.task-queue.configuration`, `temporal.namespace.list`, `temporal.namespace.describe`, `temporal.search-attributes.list`, `temporal.cluster.info`
+- [x] Worker versioning and deployment read tools — `temporal.worker.versioning-rules`, `temporal.worker.task-reachability`, `temporal.worker.deployment.list`, `temporal.worker.deployment.describe`, `temporal.worker.deployment.version.describe`, `temporal.worker.deployment.reachability`
+- [x] Payload decoding and codec support — default JSON converter, optional remote codec, graceful undecoded fallback, `security.codecAllowlist`, SSRF protection (`packages/temporal/src/payload-decoder.ts`)
+- [x] Resources and resource templates — workflow, schedule, task queue, namespace, docs resource templates, inline threshold handling (`packages/server/src/resources/`)
+- [x] Safety hardening — request IDs, structured audit logs, redaction filters, `notifications/message` for policy/audit/connection events (`packages/server/src/safety/`)
+- [x] Temporal connectivity check tool — `temporal.connection.check`
+- [x] Raw gRPC and cloud fallback handlers (`packages/temporal/src/grpc.ts`, `packages/temporal/src/cloud.ts`)
 
 ### R2 GA
 

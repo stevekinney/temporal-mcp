@@ -1,0 +1,340 @@
+import { z } from 'zod/v4';
+import type { ToolRegistrationContext } from './register-all.ts';
+import { errorResponse, successResponse } from './response-helpers.ts';
+import { buildRequestContext } from '../safety/request-context.ts';
+import { evaluatePolicy } from '../policy/evaluate.ts';
+import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
+import { redactSensitiveFields } from '../safety/redaction.ts';
+
+export function registerInfrastructureTools(
+	context: ToolRegistrationContext,
+): void {
+	const { server, connectionManager, config, auditLogger } = context;
+
+	server.registerTool(
+		'temporal.task-queue.describe',
+		{
+			description:
+				'Describe a task queue including poller information and backlog status.',
+			inputSchema: {
+				profile: z
+					.string()
+					.optional()
+					.describe('Temporal connection profile name'),
+				taskQueue: z
+					.string()
+					.describe('The name of the task queue to describe'),
+			},
+		},
+		async ({ profile, taskQueue }, extra) => {
+			const requestContext = buildRequestContext(
+				'temporal.task-queue.describe',
+				{ profile, taskQueue },
+				extra,
+			);
+			auditLogger.logToolCall(requestContext, { profile, taskQueue });
+			const startTime = Date.now();
+
+			try {
+				const contract = getToolContract('temporal.task-queue.describe');
+				if (contract) {
+					const decision = evaluatePolicy(config.policy, contract, { profile });
+					auditLogger.logPolicyDecision(requestContext, decision);
+					if (!decision.allowed) {
+						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+						return errorResponse({
+							ok: false,
+							error: { code: decision.code, message: decision.reason, retryable: false },
+						});
+					}
+				}
+
+				const { describeTaskQueueTool } = await import(
+					'../../../temporal/src/tools/infrastructure/task-queue-describe.ts'
+				);
+				const client = await connectionManager.getClient(profile);
+				const profileConfig = connectionManager.getProfileConfiguration(profile);
+				const description = await describeTaskQueueTool(client, {
+					namespace: profileConfig.namespace,
+					taskQueue,
+				});
+				const result = successResponse(redactSensitiveFields(description));
+				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
+				return result;
+			} catch (error) {
+				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+				return errorResponse(error);
+			}
+		},
+	);
+
+	server.registerTool(
+		'temporal.task-queue.configuration',
+		{
+			description:
+				'Get the configuration of a task queue including rate limits and poller settings.',
+			inputSchema: {
+				profile: z
+					.string()
+					.optional()
+					.describe('Temporal connection profile name'),
+				taskQueue: z
+					.string()
+					.describe('The name of the task queue to get configuration for'),
+			},
+		},
+		async ({ profile, taskQueue }, extra) => {
+			const requestContext = buildRequestContext(
+				'temporal.task-queue.configuration',
+				{ profile, taskQueue },
+				extra,
+			);
+			auditLogger.logToolCall(requestContext, { profile, taskQueue });
+			const startTime = Date.now();
+
+			try {
+				const contract = getToolContract('temporal.task-queue.configuration');
+				if (contract) {
+					const decision = evaluatePolicy(config.policy, contract, { profile });
+					auditLogger.logPolicyDecision(requestContext, decision);
+					if (!decision.allowed) {
+						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+						return errorResponse({
+							ok: false,
+							error: { code: decision.code, message: decision.reason, retryable: false },
+						});
+					}
+				}
+
+				const { getTaskQueueConfigurationTool } = await import(
+					'../../../temporal/src/tools/infrastructure/task-queue-configuration.ts'
+				);
+				const client = await connectionManager.getClient(profile);
+				const profileConfig = connectionManager.getProfileConfiguration(profile);
+				const configuration = await getTaskQueueConfigurationTool(client, {
+					namespace: profileConfig.namespace,
+					taskQueue,
+				});
+				const result = successResponse(redactSensitiveFields(configuration));
+				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
+				return result;
+			} catch (error) {
+				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+				return errorResponse(error);
+			}
+		},
+	);
+
+	server.registerTool(
+		'temporal.namespace.list',
+		{
+			description: 'List all namespaces in a self-hosted Temporal cluster.',
+			inputSchema: {
+				profile: z
+					.string()
+					.optional()
+					.describe('Temporal connection profile name'),
+				pageSize: z
+					.number()
+					.min(1)
+					.max(100)
+					.default(100)
+					.describe('Maximum number of namespaces to return'),
+			},
+		},
+		async ({ profile, pageSize }, extra) => {
+			const requestContext = buildRequestContext(
+				'temporal.namespace.list',
+				{ profile, pageSize },
+				extra,
+			);
+			auditLogger.logToolCall(requestContext, { profile, pageSize });
+			const startTime = Date.now();
+
+			try {
+				const contract = getToolContract('temporal.namespace.list');
+				if (contract) {
+					const decision = evaluatePolicy(config.policy, contract, { profile });
+					auditLogger.logPolicyDecision(requestContext, decision);
+					if (!decision.allowed) {
+						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+						return errorResponse({
+							ok: false,
+							error: { code: decision.code, message: decision.reason, retryable: false },
+						});
+					}
+				}
+
+				const { listNamespacesTool } = await import(
+					'../../../temporal/src/tools/infrastructure/namespace-list.ts'
+				);
+				const client = await connectionManager.getClient(profile);
+				const namespaces = await listNamespacesTool(client, { pageSize });
+				const result = successResponse(redactSensitiveFields(namespaces));
+				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
+				return result;
+			} catch (error) {
+				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+				return errorResponse(error);
+			}
+		},
+	);
+
+	server.registerTool(
+		'temporal.namespace.describe',
+		{
+			description: 'Get detailed information about a specific namespace.',
+			inputSchema: {
+				profile: z
+					.string()
+					.optional()
+					.describe('Temporal connection profile name'),
+				namespace: z.string().describe('The namespace name to describe'),
+			},
+		},
+		async ({ profile, namespace }, extra) => {
+			const requestContext = buildRequestContext(
+				'temporal.namespace.describe',
+				{ profile, namespace },
+				extra,
+			);
+			auditLogger.logToolCall(requestContext, { profile, namespace });
+			const startTime = Date.now();
+
+			try {
+				const contract = getToolContract('temporal.namespace.describe');
+				if (contract) {
+					const decision = evaluatePolicy(config.policy, contract, { profile });
+					auditLogger.logPolicyDecision(requestContext, decision);
+					if (!decision.allowed) {
+						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+						return errorResponse({
+							ok: false,
+							error: { code: decision.code, message: decision.reason, retryable: false },
+						});
+					}
+				}
+
+				const { describeNamespaceTool } = await import(
+					'../../../temporal/src/tools/infrastructure/namespace-describe.ts'
+				);
+				const client = await connectionManager.getClient(profile);
+				const description = await describeNamespaceTool(client, { namespace });
+				const result = successResponse(redactSensitiveFields(description));
+				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
+				return result;
+			} catch (error) {
+				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+				return errorResponse(error);
+			}
+		},
+	);
+
+	server.registerTool(
+		'temporal.search-attributes.list',
+		{
+			description: 'List search attributes configured for a namespace.',
+			inputSchema: {
+				profile: z
+					.string()
+					.optional()
+					.describe('Temporal connection profile name'),
+				namespace: z
+					.string()
+					.optional()
+					.describe(
+						'The namespace to list search attributes for (defaults to profile namespace)',
+					),
+			},
+		},
+		async ({ profile, namespace }, extra) => {
+			const requestContext = buildRequestContext(
+				'temporal.search-attributes.list',
+				{ profile, namespace },
+				extra,
+			);
+			auditLogger.logToolCall(requestContext, { profile, namespace });
+			const startTime = Date.now();
+
+			try {
+				const contract = getToolContract('temporal.search-attributes.list');
+				if (contract) {
+					const decision = evaluatePolicy(config.policy, contract, { profile });
+					auditLogger.logPolicyDecision(requestContext, decision);
+					if (!decision.allowed) {
+						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+						return errorResponse({
+							ok: false,
+							error: { code: decision.code, message: decision.reason, retryable: false },
+						});
+					}
+				}
+
+				const { listSearchAttributesTool } = await import(
+					'../../../temporal/src/tools/infrastructure/search-attributes-list.ts'
+				);
+				const client = await connectionManager.getClient(profile);
+				const profileConfig = connectionManager.getProfileConfiguration(profile);
+				const attributes = await listSearchAttributesTool(client, {
+					namespace: namespace ?? profileConfig.namespace,
+				});
+				const result = successResponse(redactSensitiveFields(attributes));
+				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
+				return result;
+			} catch (error) {
+				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+				return errorResponse(error);
+			}
+		},
+	);
+
+	server.registerTool(
+		'temporal.cluster.info',
+		{
+			description:
+				'Get system information about the Temporal cluster including server version and capabilities.',
+			inputSchema: {
+				profile: z
+					.string()
+					.optional()
+					.describe('Temporal connection profile name'),
+			},
+		},
+		async ({ profile }, extra) => {
+			const requestContext = buildRequestContext(
+				'temporal.cluster.info',
+				{ profile },
+				extra,
+			);
+			auditLogger.logToolCall(requestContext, { profile });
+			const startTime = Date.now();
+
+			try {
+				const contract = getToolContract('temporal.cluster.info');
+				if (contract) {
+					const decision = evaluatePolicy(config.policy, contract, { profile });
+					auditLogger.logPolicyDecision(requestContext, decision);
+					if (!decision.allowed) {
+						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+						return errorResponse({
+							ok: false,
+							error: { code: decision.code, message: decision.reason, retryable: false },
+						});
+					}
+				}
+
+				const { getClusterInfo } = await import(
+					'../../../temporal/src/tools/infrastructure/cluster-info.ts'
+				);
+				const client = await connectionManager.getClient(profile);
+				const info = await getClusterInfo(client);
+				const result = successResponse(redactSensitiveFields(info));
+				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
+				return result;
+			} catch (error) {
+				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+				return errorResponse(error);
+			}
+		},
+	);
+}

@@ -6,6 +6,7 @@ import type {
   StdioTransportConfig,
   TemporalConfig,
 } from '../contracts/config';
+import type { PolicyConfig } from '../contracts/policy';
 
 export const DEFAULT_MCP_CAPABILITIES: McpCapabilitiesConfig = {
   tasks: true,
@@ -37,6 +38,16 @@ export const DEFAULT_TEMPORAL_CONFIG: TemporalConfig = {
   profiles: {},
 };
 
+export const DEFAULT_POLICY_CONFIG: PolicyConfig = {
+  mode: 'readOnly',
+  hardReadOnly: false,
+  allowedProfiles: [],
+  allowedNamespaces: [],
+  allowPatterns: [],
+  denyPatterns: [],
+  breakGlassVariable: 'TEMPORAL_MCP_BREAK_GLASS',
+};
+
 export const DEFAULT_APP_CONFIG: AppConfigContract = {
   mcp: {
     capabilities: DEFAULT_MCP_CAPABILITIES,
@@ -48,4 +59,5 @@ export const DEFAULT_APP_CONFIG: AppConfigContract = {
   },
   temporal: DEFAULT_TEMPORAL_CONFIG,
   security: DEFAULT_SECURITY_CONFIG,
+  policy: DEFAULT_POLICY_CONFIG,
 };

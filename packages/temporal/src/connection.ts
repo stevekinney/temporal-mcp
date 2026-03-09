@@ -40,6 +40,28 @@ export class TemporalConnectionManager {
 		return client;
 	}
 
+	getProfileConfiguration(name?: string): TemporalProfileConfig {
+		const profileName = name ?? this.config.defaultProfile;
+
+		if (!profileName) {
+			throw this.createError(
+				'PROFILE_NOT_SPECIFIED',
+				'No profile name provided and no default profile configured',
+			);
+		}
+
+		const profile = this.config.profiles[profileName];
+
+		if (!profile) {
+			throw this.createError(
+				'PROFILE_NOT_FOUND',
+				`Profile "${profileName}" not found. Available profiles: ${Object.keys(this.config.profiles).join(', ') || '(none)'}`,
+			);
+		}
+
+		return profile;
+	}
+
 	private async connect(profile: TemporalProfileConfig): Promise<Client> {
 		const connectionOptions: { address: string; apiKey?: string } = {
 			address: profile.address,
