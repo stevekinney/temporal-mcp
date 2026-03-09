@@ -1,4 +1,4 @@
-import { join, resolve, relative } from 'node:path';
+import { isAbsolute, join, resolve, relative } from 'node:path';
 import { realpath } from 'node:fs/promises';
 import { getCorpusPath } from '../sync.ts';
 
@@ -54,8 +54,13 @@ function throwPathTraversalError(sourcePath: string): never {
 }
 
 function isOutsideCorpus(relativePath: string): boolean {
-	const [firstSegment] = relativePath.split(/[\\/]/);
-	return firstSegment === '..';
+	const normalizedRelativePath = relativePath.replace(/\\/g, '/');
+	return (
+		normalizedRelativePath === '..' ||
+		normalizedRelativePath.startsWith('../') ||
+		isAbsolute(relativePath) ||
+		/^[A-Za-z]:\//.test(normalizedRelativePath)
+	);
 }
 
 async function assertRealPathWithinCorpus(
