@@ -420,7 +420,9 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					'../../../temporal/src/tools/workflow/history.ts'
 				);
 				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(profile);
+				const profileConfig = connectionManager.getProfileConfiguration(
+					profile || undefined,
+				);
 				const history = await getWorkflowHistoryReverse(client, {
 					namespace: profileConfig.namespace,
 					workflowId,

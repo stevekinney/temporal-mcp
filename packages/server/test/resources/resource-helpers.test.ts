@@ -5,6 +5,7 @@ import {
 	jsonResourceContent,
 } from '../../src/resources/resource-helpers.ts';
 import type { ResourceRegistrationContext } from '../../src/resources/register.ts';
+import { AuditLogger } from '../../src/safety/audit-log.ts';
 
 function makeContext(
 	overrides: Partial<ResourceRegistrationContext> = {},
@@ -13,6 +14,7 @@ function makeContext(
 		server: {} as any,
 		connectionManager: {} as any,
 		config: DEFAULT_APP_CONFIG,
+		auditLogger: new AuditLogger(),
 		...overrides,
 	};
 }

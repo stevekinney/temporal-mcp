@@ -18,6 +18,7 @@ export interface PolicyDecision {
 		| 'HARD_READ_ONLY'
 		| 'MODE_BLOCKED'
 		| 'DENY_PATTERN'
+		| 'ALLOW_PATTERN_MISS'
 		| 'PROFILE_NOT_ALLOWED'
 		| 'NAMESPACE_NOT_ALLOWED'
 		| 'BREAK_GLASS_REQUIRED';

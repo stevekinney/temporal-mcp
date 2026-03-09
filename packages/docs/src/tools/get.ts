@@ -1,8 +1,10 @@
 import { join, resolve, relative } from 'node:path';
+import { realpath } from 'node:fs/promises';
 import { getCorpusPath } from '../sync.ts';
 
 export interface DocGetInput {
 	sourcePath: string;
+	corpusPath?: string;
 }
 
 export function validateDocPath(
@@ -13,22 +15,15 @@ export function validateDocPath(
 
 	// Prevent path traversal
 	const rel = relative(corpusPath, fullPath);
-	if (rel.startsWith('..') || resolve(fullPath) !== fullPath) {
-		throw {
-			ok: false,
-			error: {
-				code: 'PATH_TRAVERSAL',
-				message: `Invalid path: "${sourcePath}" resolves outside the docs corpus`,
-				retryable: false,
-			},
-		};
+	if (isOutsideCorpus(rel) || resolve(fullPath) !== fullPath) {
+		throwPathTraversalError(sourcePath);
 	}
 
 	return fullPath;
 }
 
 export async function getDoc(input: DocGetInput): Promise<string> {
-	const corpusPath = getCorpusPath();
+	const corpusPath = input.corpusPath ?? getCorpusPath();
 	const fullPath = validateDocPath(corpusPath, input.sourcePath);
 
 	const file = Bun.file(fullPath);
@@ -43,5 +38,37 @@ export async function getDoc(input: DocGetInput): Promise<string> {
 		};
 	}
 
+	await assertRealPathWithinCorpus(corpusPath, fullPath, input.sourcePath);
 	return await file.text();
+}
+
+function throwPathTraversalError(sourcePath: string): never {
+	throw {
+		ok: false,
+		error: {
+			code: 'PATH_TRAVERSAL',
+			message: `Invalid path: "${sourcePath}" resolves outside the docs corpus`,
+			retryable: false,
+		},
+	};
+}
+
+function isOutsideCorpus(relativePath: string): boolean {
+	const [firstSegment] = relativePath.split(/[\\/]/);
+	return firstSegment === '..';
+}
+
+async function assertRealPathWithinCorpus(
+	corpusPath: string,
+	fullPath: string,
+	sourcePath: string,
+): Promise<void> {
+	const [resolvedCorpusPath, resolvedFilePath] = await Promise.all([
+		realpath(corpusPath),
+		realpath(fullPath),
+	]);
+	const resolvedRelativePath = relative(resolvedCorpusPath, resolvedFilePath);
+	if (isOutsideCorpus(resolvedRelativePath)) {
+		throwPathTraversalError(sourcePath);
+	}
 }

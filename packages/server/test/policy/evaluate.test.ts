@@ -161,7 +161,7 @@ describe('evaluatePolicy', () => {
 			const tool = makeToolContract({ name: 'temporal.workflow.list' });
 			const result = evaluatePolicy(config, tool, {});
 			expect(result.allowed).toBe(false);
-			expect(result.code).toBe('DENY_PATTERN');
+			expect(result.code).toBe('ALLOW_PATTERN_MISS');
 		});
 
 		test('deny patterns take precedence over allow patterns', () => {

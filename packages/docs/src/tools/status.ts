@@ -16,13 +16,15 @@ interface DocsStatusMetadata {
 	sdkFilter: string[];
 }
 
-function getStatusMetadataPath(): string {
-	return join(homedir(), '.temporal-mcp', 'cache', 'docs-status.json');
+function getStatusMetadataPath(homeDirectory: string = homedir()): string {
+	return join(homeDirectory, '.temporal-mcp', 'cache', 'docs-status.json');
 }
 
-async function loadDocsStatusMetadata(): Promise<DocsStatusMetadata | null> {
+async function loadDocsStatusMetadata(
+	homeDirectory: string = homedir(),
+): Promise<DocsStatusMetadata | null> {
 	try {
-		const file = Bun.file(getStatusMetadataPath());
+		const file = Bun.file(getStatusMetadataPath(homeDirectory));
 		if (!(await file.exists())) return null;
 		return (await file.json()) as DocsStatusMetadata;
 	} catch {
@@ -33,20 +35,27 @@ async function loadDocsStatusMetadata(): Promise<DocsStatusMetadata | null> {
 export async function persistDocsStatusMetadata(
 	documentCount: number,
 	sdkFilter: string[],
+	homeDirectory: string = homedir(),
 ): Promise<void> {
 	const metadata: DocsStatusMetadata = { documentCount, sdkFilter };
-	await mkdir(join(homedir(), '.temporal-mcp', 'cache'), { recursive: true });
-	await Bun.write(getStatusMetadataPath(), JSON.stringify(metadata, null, 2));
+	await mkdir(join(homeDirectory, '.temporal-mcp', 'cache'), {
+		recursive: true,
+	});
+	await Bun.write(
+		getStatusMetadataPath(homeDirectory),
+		JSON.stringify(metadata, null, 2),
+	);
 }
 
 export async function getDocsStatus(
 	documentCount?: number,
 	sdkFilter?: string[],
+	homeDirectory: string = homedir(),
 ): Promise<DocsStatus> {
-	const meta = await getSyncMetadata();
+	const meta = await getSyncMetadata(homeDirectory);
 	const persistedMetadata =
 		documentCount === undefined || sdkFilter === undefined
-			? await loadDocsStatusMetadata()
+			? await loadDocsStatusMetadata(homeDirectory)
 			: null;
 
 	return {

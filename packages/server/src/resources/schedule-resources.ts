@@ -1,5 +1,6 @@
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ResourceRegistrationContext } from './register.ts';
+import { buildRequestContext } from '../safety/request-context.ts';
 import {
 	assertResourcePolicy,
 	getVariable,
@@ -10,7 +11,7 @@ import {
 export function registerScheduleResources(
 	context: ResourceRegistrationContext,
 ): void {
-	const { server, connectionManager } = context;
+	const { server, connectionManager, auditLogger } = context;
 
 	server.registerResource(
 		'temporal-schedule',
@@ -28,19 +29,43 @@ export function registerScheduleResources(
 				connectionManager.resolveProfileName(profile || undefined);
 			const profileConfiguration =
 				connectionManager.getProfileConfiguration(effectiveProfile);
-			assertResourcePolicy(context, 'temporal.schedule.describe', {
+			const requestContext = buildRequestContext('resource.temporal-schedule', {
 				profile: effectiveProfile,
-				namespace: profileConfiguration.namespace,
 			});
+			auditLogger.logToolCall(requestContext, { profile: effectiveProfile, scheduleId });
+			const startTime = Date.now();
 
-			const client = await connectionManager.getClient(effectiveProfile);
-			const handle = client.schedule.getHandle(scheduleId);
-			const description = await handle.describe();
-			return {
-				contents: [
-					jsonResourceContent(uri, description),
-				],
-			};
+			try {
+				assertResourcePolicy(
+					context,
+					'temporal.schedule.describe',
+					{
+						profile: effectiveProfile,
+						namespace: profileConfiguration.namespace,
+					},
+					requestContext,
+				);
+
+				const client = await connectionManager.getClient(effectiveProfile);
+				const handle = client.schedule.getHandle(scheduleId);
+				const description = await handle.describe();
+				const result = {
+					contents: [jsonResourceContent(uri, description)],
+				};
+				auditLogger.logToolResult(
+					requestContext,
+					'success',
+					Date.now() - startTime,
+				);
+				return result;
+			} catch (error) {
+				auditLogger.logToolResult(
+					requestContext,
+					'error',
+					Date.now() - startTime,
+				);
+				throw error;
+			}
 		},
 	);
 }

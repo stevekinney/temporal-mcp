@@ -41,7 +41,7 @@ export function evaluatePolicy(
 		return {
 			allowed: false,
 			reason: `Tool "${toolContract.name}" does not match any allow pattern`,
-			code: 'DENY_PATTERN',
+			code: 'ALLOW_PATTERN_MISS',
 		};
 	}
 

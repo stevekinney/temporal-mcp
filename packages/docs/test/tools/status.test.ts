@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { mkdtempSync } from 'node:fs';
-import { rm } from 'node:fs/promises';
+import { describe, expect, test } from 'bun:test';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
@@ -9,24 +8,19 @@ import {
 } from '../../src/tools/status.ts';
 
 describe('docs status metadata', () => {
-	let temporaryHomeDirectory = '';
-	let originalHome = '';
-	let originalUserProfile = '';
-
-	beforeEach(() => {
-		temporaryHomeDirectory = mkdtempSync(
+	test('defaults to zero counts when no persisted metadata exists', async () => {
+		const temporaryHomeDirectory = await mkdtemp(
 			join(tmpdir(), 'temporal-mcp-docs-status-'),
 		);
-		originalHome = process.env.HOME ?? '';
-		originalUserProfile = process.env.USERPROFILE ?? '';
-		process.env.HOME = temporaryHomeDirectory;
-		delete process.env.USERPROFILE;
-	});
-
-	afterEach(async () => {
-		process.env.HOME = originalHome;
-		process.env.USERPROFILE = originalUserProfile;
-		if (temporaryHomeDirectory) {
+		try {
+			const status = await getDocsStatus(
+				undefined,
+				undefined,
+				temporaryHomeDirectory,
+			);
+			expect(status.documentCount).toBe(0);
+			expect(status.sdkFilter).toEqual([]);
+		} finally {
 			await rm(temporaryHomeDirectory, {
 				recursive: true,
 				force: true,
@@ -34,23 +28,53 @@ describe('docs status metadata', () => {
 		}
 	});
 
-	test('defaults to zero counts when no persisted metadata exists', async () => {
-		const status = await getDocsStatus();
-		expect(status.documentCount).toBe(0);
-		expect(status.sdkFilter).toEqual([]);
-	});
-
 	test('loads persisted metadata for document count and sdk filter', async () => {
-		await persistDocsStatusMetadata(27, ['typescript', 'go']);
-		const status = await getDocsStatus();
-		expect(status.documentCount).toBe(27);
-		expect(status.sdkFilter).toEqual(['typescript', 'go']);
+		const temporaryHomeDirectory = await mkdtemp(
+			join(tmpdir(), 'temporal-mcp-docs-status-'),
+		);
+		try {
+			await persistDocsStatusMetadata(
+				27,
+				['typescript', 'go'],
+				temporaryHomeDirectory,
+			);
+			const status = await getDocsStatus(
+				undefined,
+				undefined,
+				temporaryHomeDirectory,
+			);
+			expect(status.documentCount).toBe(27);
+			expect(status.sdkFilter).toEqual(['typescript', 'go']);
+		} finally {
+			await rm(temporaryHomeDirectory, {
+				recursive: true,
+				force: true,
+			});
+		}
 	});
 
 	test('explicit counts override persisted metadata', async () => {
-		await persistDocsStatusMetadata(27, ['typescript', 'go']);
-		const status = await getDocsStatus(3, ['python']);
-		expect(status.documentCount).toBe(3);
-		expect(status.sdkFilter).toEqual(['python']);
+		const temporaryHomeDirectory = await mkdtemp(
+			join(tmpdir(), 'temporal-mcp-docs-status-'),
+		);
+		try {
+			await persistDocsStatusMetadata(
+				27,
+				['typescript', 'go'],
+				temporaryHomeDirectory,
+			);
+			const status = await getDocsStatus(
+				3,
+				['python'],
+				temporaryHomeDirectory,
+			);
+			expect(status.documentCount).toBe(3);
+			expect(status.sdkFilter).toEqual(['python']);
+		} finally {
+			await rm(temporaryHomeDirectory, {
+				recursive: true,
+				force: true,
+			});
+		}
 	});
 });

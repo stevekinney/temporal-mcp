@@ -10,12 +10,12 @@ export interface SyncMetadata {
 	corpusPath: string;
 }
 
-export function getCorpusPath(): string {
-	return join(homedir(), '.temporal-mcp', 'docs-corpus');
+export function getCorpusPath(homeDirectory: string = homedir()): string {
+	return join(homeDirectory, '.temporal-mcp', 'docs-corpus');
 }
 
-export function getSyncMetaPath(): string {
-	return join(homedir(), '.temporal-mcp', 'sync-meta.json');
+export function getSyncMetaPath(homeDirectory: string = homedir()): string {
+	return join(homeDirectory, '.temporal-mcp', 'sync-meta.json');
 }
 
 function createSyncError(message: string, retryable: boolean): {
@@ -51,8 +51,9 @@ export async function syncDocs(): Promise<SyncMetadata> {
 		};
 	}
 
-	const corpusPath = getCorpusPath();
-	await mkdir(join(homedir(), '.temporal-mcp'), { recursive: true });
+	const homeDirectory = homedir();
+	const corpusPath = getCorpusPath(homeDirectory);
+	await mkdir(join(homeDirectory, '.temporal-mcp'), { recursive: true });
 
 	// Check if already cloned
 	const exists = await Bun.file(join(corpusPath, '.git', 'HEAD')).exists();
@@ -125,14 +126,19 @@ export async function syncDocs(): Promise<SyncMetadata> {
 	};
 
 	// Persist sync metadata
-	await Bun.write(getSyncMetaPath(), JSON.stringify(metadata, null, 2));
+	await Bun.write(
+		getSyncMetaPath(homeDirectory),
+		JSON.stringify(metadata, null, 2),
+	);
 
 	return metadata;
 }
 
-export async function getSyncMetadata(): Promise<SyncMetadata | null> {
+export async function getSyncMetadata(
+	homeDirectory: string = homedir(),
+): Promise<SyncMetadata | null> {
 	try {
-		const file = Bun.file(getSyncMetaPath());
+		const file = Bun.file(getSyncMetaPath(homeDirectory));
 		if (!(await file.exists())) return null;
 		return await file.json();
 	} catch {

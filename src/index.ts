@@ -17,7 +17,7 @@ async function main() {
 	const auditLogger = new AuditLogger();
 
 	registerAllTools({ server, connectionManager, config, auditLogger, taskStore });
-	registerAllResources({ server, connectionManager, config });
+	registerAllResources({ server, connectionManager, config, auditLogger });
 
 	const transport = new StdioServerTransport();
 	await server.connect(transport);

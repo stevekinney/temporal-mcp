@@ -162,7 +162,7 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 					'../../../docs/src/tools/get.ts'
 				);
 				const content = await getDoc({ sourcePath });
-				const result = successResponse({ content });
+				const result = successResponse(redactSensitiveFields({ content }));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
@@ -244,10 +244,14 @@ function registerDocsRefreshWithTasks(context: ToolRegistrationContext): void {
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', 0);
-						return errorResponse({
+						throw {
 							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
+							error: {
+								code: decision.code,
+								message: decision.reason,
+								retryable: false,
+							},
+						};
 					}
 				}
 
