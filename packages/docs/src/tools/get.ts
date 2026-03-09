@@ -15,7 +15,7 @@ export function validateDocPath(
 
 	// Prevent path traversal
 	const rel = relative(corpusPath, fullPath);
-	if (isOutsideCorpus(rel) || resolve(fullPath) !== fullPath) {
+	if (isOutsideCorpus(rel)) {
 		throwPathTraversalError(sourcePath);
 	}
 

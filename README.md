@@ -205,12 +205,12 @@ The policy engine controls which tools an agent can invoke. It defaults to `read
 |------|----------|
 | `readOnly` | Allows all read-risk tools. This is the default. |
 | `safeWrite` | Allows read-risk tools and write-risk tools marked as safe (none exist yet). |
-| `custom` | Uses `allowPatterns` and `denyPatterns` to decide on a per-tool basis. |
+| `custom` | Applies no additional risk-based restriction beyond the global filters and allowlists. |
 | `unsafe` | Allows everything, but requires the break-glass environment variable to be set. |
 
 ### Tool filtering
 
-In `custom` mode, use glob patterns to control which tools are available:
+In any mode, `allowPatterns` and `denyPatterns` can control which tools are available:
 
 ```json
 {

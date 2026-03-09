@@ -1,0 +1,2 @@
+- Keep policy documentation explicit that `allowPatterns` and `denyPatterns` are enforced before mode checks, so they apply in every mode.
+- Remove logically dead traversal guards once equivalent path normalization already happened; keep one clear boundary check plus realpath containment for symlink safety.
