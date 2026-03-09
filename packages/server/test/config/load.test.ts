@@ -6,12 +6,17 @@ import { join } from 'node:path';
 
 describe('loadConfiguration', () => {
 	const originalEnv = process.env.TEMPORAL_MCP_CONFIG;
+	const originalCwd = process.cwd();
 
 	beforeEach(() => {
 		delete process.env.TEMPORAL_MCP_CONFIG;
+		// Change to a temp directory so the CWD candidate doesn't find
+		// .temporal-mcp.json from the project root.
+		process.chdir(tmpdir());
 	});
 
 	afterEach(() => {
+		process.chdir(originalCwd);
 		if (originalEnv !== undefined) {
 			process.env.TEMPORAL_MCP_CONFIG = originalEnv;
 		} else {
