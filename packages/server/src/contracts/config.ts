@@ -1,4 +1,4 @@
-export type ProfileKind = 'selfHosted' | 'cloud';
+export type ProfileKind = 'self-hosted' | 'cloud';
 
 export interface McpCapabilitiesConfig {
   tasks: boolean;

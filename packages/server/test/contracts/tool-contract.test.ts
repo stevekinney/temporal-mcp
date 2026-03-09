@@ -12,12 +12,12 @@ describe('tool contract', () => {
     const allowedRisk: Risk[] = ['read', 'write', 'destructive', 'admin'];
     const allowedBackends: ImplementationBackend[] = [
       'sdk',
-      'workflowService',
-      'operatorService',
+      'workflow-service',
+      'operator-service',
       'cloud',
       'cli',
     ];
-    const allowedAvailability: Availability[] = ['selfHosted', 'cloud', 'both'];
+    const allowedAvailability: Availability[] = ['self-hosted', 'cloud', 'both'];
     const allowedStability: Stability[] = ['stable', 'experimental', 'deprecated'];
 
     expect(allowedRisk).toContain(TOOL_CONTRACT_EXAMPLE.contract.risk);

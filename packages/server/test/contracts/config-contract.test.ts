@@ -2,9 +2,9 @@ import { describe, expect, test } from 'bun:test';
 import type { AppConfigContract, ProfileKind } from '../../src/contracts/config';
 
 describe('config contract types', () => {
-  test('profile kind only accepts cloud or selfHosted values', () => {
-    const kinds: ProfileKind[] = ['selfHosted', 'cloud'];
-    expect(kinds).toEqual(['selfHosted', 'cloud']);
+  test('profile kind only accepts cloud or self-hosted values', () => {
+    const kinds: ProfileKind[] = ['self-hosted', 'cloud'];
+    expect(kinds).toEqual(['self-hosted', 'cloud']);
   });
 
   test('sample app config satisfies contract shape', () => {
@@ -31,7 +31,7 @@ describe('config contract types', () => {
         defaultProfile: 'dev',
         profiles: {
           dev: {
-            kind: 'selfHosted',
+            kind: 'self-hosted',
             address: 'localhost:7233',
             namespace: 'default',
           },
@@ -47,7 +47,7 @@ describe('config contract types', () => {
 
     const devProfile = config.temporal.profiles.dev;
     expect(devProfile).toBeDefined();
-    expect(devProfile?.kind).toBe('selfHosted');
+    expect(devProfile?.kind).toBe('self-hosted');
     expect(config.mcp.capabilities.completions).toBeTrue();
     expect(config.security.codecAllowlist.length).toBe(1);
   });
