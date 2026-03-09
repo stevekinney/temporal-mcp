@@ -28,7 +28,16 @@ export function assertResourcePolicy(
 	requestContext?: RequestContext,
 ): void {
 	const contract = getToolContract(toolName);
-	if (!contract) return;
+	if (!contract) {
+		throw {
+			ok: false,
+			error: {
+				code: 'TOOL_NOT_FOUND',
+				message: `Tool "${toolName}" is not registered in the capability matrix`,
+				retryable: false,
+			},
+		};
+	}
 
 	const decision = evaluatePolicy(context.config.policy, contract, scope);
 	if (requestContext) {

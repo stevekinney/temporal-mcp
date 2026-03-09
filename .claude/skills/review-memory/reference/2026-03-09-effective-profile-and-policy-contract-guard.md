@@ -1,0 +1,3 @@
+- Use the resolved effective profile consistently for policy scope, audit context, and client acquisition so policy evaluation and execution always target the same profile.
+- Treat missing capability-matrix contracts as a hard error (fail closed) in policy gates and resource guards to prevent silent policy bypass.
+- Decode process stderr bytes explicitly when building error messages; `Uint8Array.toString()` does not produce usable command stderr text.

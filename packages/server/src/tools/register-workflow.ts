@@ -17,7 +17,16 @@ function policyGate(
 	namespace?: string,
 ) {
 	const contract = getToolContract(toolName);
-	if (!contract) return null;
+	if (!contract) {
+		return errorResponse({
+			ok: false,
+			error: {
+				code: 'TOOL_NOT_FOUND',
+				message: `Tool "${toolName}" is not registered in the capability matrix`,
+				retryable: false,
+			},
+		});
+	}
 	const policyScope = resolveTemporalPolicyScope(context, profile, namespace);
 	const decision = evaluatePolicy(context.config.policy, contract, policyScope);
 	context.auditLogger.logPolicyDecision(requestContext, decision);

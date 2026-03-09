@@ -53,7 +53,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				const { getVersioningRules } = await import(
 					'../../../temporal/src/tools/worker/versioning-rules.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const rules = await getVersioningRules(client, {
 					namespace: policyScope.namespace,
 					taskQueue,
@@ -114,7 +114,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				const { getTaskReachability } = await import(
 					'../../../temporal/src/tools/worker/task-reachability.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const reachability = await getTaskReachability(client, {
 					namespace: policyScope.namespace,
 					taskQueue,
@@ -174,7 +174,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				const { listWorkerDeployments } = await import(
 					'../../../temporal/src/tools/worker/deployment.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const deployments = await listWorkerDeployments(client, {
 					namespace: policyScope.namespace,
 					pageSize,
@@ -230,7 +230,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				const { describeWorkerDeployment } = await import(
 					'../../../temporal/src/tools/worker/deployment.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const description = await describeWorkerDeployment(client, {
 					namespace: policyScope.namespace,
 					deploymentName,
@@ -287,7 +287,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				const { describeWorkerDeploymentVersion } = await import(
 					'../../../temporal/src/tools/worker/deployment.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const description = await describeWorkerDeploymentVersion(client, {
 					namespace: policyScope.namespace,
 					deploymentName,
@@ -345,7 +345,7 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				const { getDeploymentReachability } = await import(
 					'../../../temporal/src/tools/worker/deployment.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const reachability = await getDeploymentReachability(client, {
 					namespace: policyScope.namespace,
 					deploymentName,

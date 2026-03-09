@@ -33,7 +33,7 @@ function createSyncError(message: string, retryable: boolean): {
 }
 
 function formatStderr(stderr: Uint8Array): string {
-	const text = stderr.toString().trim();
+	const text = new TextDecoder().decode(stderr).trim();
 	return text.length > 0 ? text : 'No stderr output available.';
 }
 

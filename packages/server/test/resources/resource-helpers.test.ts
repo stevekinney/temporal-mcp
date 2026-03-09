@@ -59,6 +59,16 @@ describe('resource helpers', () => {
 		).not.toThrow();
 	});
 
+	test('assertResourcePolicy throws when tool contract is missing', () => {
+		const context = makeContext();
+		expect(() =>
+			assertResourcePolicy(context, 'nonexistent.tool', {
+				profile: 'default',
+				namespace: 'default',
+			}),
+		).toThrow();
+	});
+
 	test('jsonResourceContent redacts sensitive fields', () => {
 		const content = jsonResourceContent(new URL('temporal:///x'), {
 			token: 'secret-value',

@@ -26,17 +26,25 @@ export function registerConnectionTools(
 			}),
 		},
 		async ({ profile }: any, extra: any) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.connection.check',
 				{ profile },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile });
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.connection.check');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
+				requestContext = buildRequestContext(
+					'temporal.connection.check',
+					{ profile: policyScope.profile },
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, {
+					profile: policyScope.profile,
+				});
+
+				const contract = getToolContract('temporal.connection.check');
 				if (contract) {
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
@@ -52,7 +60,10 @@ export function registerConnectionTools(
 				const { checkConnection } = await import(
 					'../../../temporal/src/tools/connection-check.ts'
 				);
-				const connectionResult = await checkConnection(connectionManager, profile);
+				const connectionResult = await checkConnection(
+					connectionManager,
+					policyScope.profile,
+				);
 				const result = successResponse(redactSensitiveFields(connectionResult));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;

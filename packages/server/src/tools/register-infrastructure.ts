@@ -55,7 +55,7 @@ export function registerInfrastructureTools(
 				const { describeTaskQueueTool } = await import(
 					'../../../temporal/src/tools/infrastructure/task-queue-describe.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const description = await describeTaskQueueTool(client, {
 					namespace: policyScope.namespace,
 					taskQueue,
@@ -112,7 +112,7 @@ export function registerInfrastructureTools(
 				const { getTaskQueueConfigurationTool } = await import(
 					'../../../temporal/src/tools/infrastructure/task-queue-configuration.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const configuration = await getTaskQueueConfigurationTool(client, {
 					namespace: policyScope.namespace,
 					taskQueue,
@@ -171,7 +171,7 @@ export function registerInfrastructureTools(
 				const { listNamespacesTool } = await import(
 					'../../../temporal/src/tools/infrastructure/namespace-list.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const namespaces = await listNamespacesTool(client, { pageSize });
 				const result = successResponse(redactSensitiveFields(namespaces));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -226,7 +226,7 @@ export function registerInfrastructureTools(
 				const { describeNamespaceTool } = await import(
 					'../../../temporal/src/tools/infrastructure/namespace-describe.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const description = await describeNamespaceTool(client, { namespace });
 				const result = successResponse(redactSensitiveFields(description));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -286,7 +286,7 @@ export function registerInfrastructureTools(
 				const { listSearchAttributesTool } = await import(
 					'../../../temporal/src/tools/infrastructure/search-attributes-list.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const attributes = await listSearchAttributesTool(client, {
 					namespace: policyScope.namespace,
 				});
@@ -339,7 +339,7 @@ export function registerInfrastructureTools(
 				const { getClusterInfo } = await import(
 					'../../../temporal/src/tools/infrastructure/cluster-info.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const info = await getClusterInfo(client);
 				const result = successResponse(redactSensitiveFields(info));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);

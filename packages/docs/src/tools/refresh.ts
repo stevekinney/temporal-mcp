@@ -29,8 +29,8 @@ export async function refreshDocs(): Promise<DocsStatus> {
 				.filter((sdk): sdk is string => sdk !== null),
 		),
 	];
-	await persistDocsStatusMetadata(sourcePaths.length, sdkFilter);
-	return getDocsStatus(sourcePaths.length, sdkFilter);
+	await persistDocsStatusMetadata(chunks.length, sdkFilter);
+	return getDocsStatus(chunks.length, sdkFilter);
 }
 
 async function collectMarkdownSourcePaths(corpusPath: string): Promise<string[]> {

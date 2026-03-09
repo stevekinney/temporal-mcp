@@ -29,17 +29,26 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, pageSize }: any, extra: any) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.schedule.list',
 				{ profile, pageSize },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, pageSize });
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.schedule.list');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
+				requestContext = buildRequestContext(
+					'temporal.schedule.list',
+					{ profile: policyScope.profile, pageSize },
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, {
+					profile: policyScope.profile,
+					pageSize,
+				});
+
+				const contract = getToolContract('temporal.schedule.list');
 				if (contract) {
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
@@ -55,7 +64,7 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 				const { listSchedules } = await import(
 					'../../../temporal/src/tools/schedule/list.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const schedules = await listSchedules(client, { pageSize });
 				const result = successResponse(redactSensitiveFields(schedules));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -80,17 +89,26 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, scheduleId }: any, extra: any) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.schedule.describe',
 				{ profile, scheduleId },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, scheduleId });
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.schedule.describe');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
+				requestContext = buildRequestContext(
+					'temporal.schedule.describe',
+					{ profile: policyScope.profile, scheduleId },
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, {
+					profile: policyScope.profile,
+					scheduleId,
+				});
+
+				const contract = getToolContract('temporal.schedule.describe');
 				if (contract) {
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
@@ -106,7 +124,7 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 				const { describeSchedule } = await import(
 					'../../../temporal/src/tools/schedule/describe.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const description = await describeSchedule(client, { scheduleId });
 				const result = successResponse(redactSensitiveFields(description));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -142,22 +160,38 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 			{ profile, scheduleId, startTime: rangeStart, endTime: rangeEnd }: any,
 			extra: any,
 		) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.schedule.matching-times',
-				{ profile, scheduleId, startTime: rangeStart, endTime: rangeEnd },
+				{
+					profile,
+					scheduleId,
+					startTime: rangeStart,
+					endTime: rangeEnd,
+				},
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, {
-				profile,
-				scheduleId,
-				startTime: rangeStart,
-				endTime: rangeEnd,
-			});
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.schedule.matching-times');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
+				requestContext = buildRequestContext(
+					'temporal.schedule.matching-times',
+					{
+						profile: policyScope.profile,
+						scheduleId,
+						startTime: rangeStart,
+						endTime: rangeEnd,
+					},
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, {
+					profile: policyScope.profile,
+					scheduleId,
+					startTime: rangeStart,
+					endTime: rangeEnd,
+				});
+
+				const contract = getToolContract('temporal.schedule.matching-times');
 				if (contract) {
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
@@ -173,7 +207,7 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 				const { listScheduleMatchingTimes } = await import(
 					'../../../temporal/src/tools/schedule/matching-times.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(policyScope.profile);
 				const matchingTimes = await listScheduleMatchingTimes(client, {
 					namespace: policyScope.namespace,
 					scheduleId,

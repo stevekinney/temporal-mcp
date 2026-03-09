@@ -81,8 +81,8 @@ export async function loadPersistedIndex(): Promise<MiniSearch | null> {
 	try {
 		const file = Bun.file(getIndexPath());
 		if (!(await file.exists())) return null;
-		const data = await file.json();
-		return MiniSearch.loadJSON(JSON.stringify(data), {
+		const serializedIndex = await file.text();
+		return MiniSearch.loadJSON(serializedIndex, {
 			fields: ['title', 'headingPath', 'text'],
 			storeFields: ['title', 'headingPath', 'sourcePath', 'sdk', 'section'],
 			idField: 'id',
