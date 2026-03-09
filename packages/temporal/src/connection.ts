@@ -13,24 +13,29 @@ export class TemporalConnectionManager {
 		this.config = config;
 	}
 
-	async getClient(profileName?: string): Promise<Client> {
-		const name = profileName ?? this.config.defaultProfile;
+	resolveProfileName(profileName?: string): string {
+		const resolvedProfileName = profileName ?? this.config.defaultProfile;
 
-		if (!name) {
+		if (!resolvedProfileName) {
 			throw this.createError(
 				'PROFILE_NOT_SPECIFIED',
 				'No profile name provided and no default profile configured',
 			);
 		}
 
-		const profile = this.config.profiles[name];
-
-		if (!profile) {
+		if (!this.config.profiles[resolvedProfileName]) {
 			throw this.createError(
 				'PROFILE_NOT_FOUND',
-				`Profile "${name}" not found. Available profiles: ${Object.keys(this.config.profiles).join(', ') || '(none)'}`,
+				`Profile "${resolvedProfileName}" not found. Available profiles: ${Object.keys(this.config.profiles).join(', ') || '(none)'}`,
 			);
 		}
+
+		return resolvedProfileName;
+	}
+
+	async getClient(profileName?: string): Promise<Client> {
+		const name = this.resolveProfileName(profileName);
+		const profile = this.config.profiles[name]!;
 
 		const cached = this.clients.get(name);
 		if (cached) return cached;
@@ -41,25 +46,8 @@ export class TemporalConnectionManager {
 	}
 
 	getProfileConfiguration(name?: string): TemporalProfileConfig {
-		const profileName = name ?? this.config.defaultProfile;
-
-		if (!profileName) {
-			throw this.createError(
-				'PROFILE_NOT_SPECIFIED',
-				'No profile name provided and no default profile configured',
-			);
-		}
-
-		const profile = this.config.profiles[profileName];
-
-		if (!profile) {
-			throw this.createError(
-				'PROFILE_NOT_FOUND',
-				`Profile "${profileName}" not found. Available profiles: ${Object.keys(this.config.profiles).join(', ') || '(none)'}`,
-			);
-		}
-
-		return profile;
+		const profileName = this.resolveProfileName(name);
+		return this.config.profiles[profileName]!;
 	}
 
 	private async connect(profile: TemporalProfileConfig): Promise<Client> {

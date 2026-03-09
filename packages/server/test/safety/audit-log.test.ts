@@ -95,6 +95,22 @@ describe('AuditLogger', () => {
 			const entry = JSON.parse(stderrOutput[0]!);
 			expect(entry.args.clientSecret).toBe('[REDACTED]');
 		});
+
+		test('sanitizes additional sensitive args (authorization/cookie/session)', () => {
+			const context = createRequestContext();
+			logger.logToolCall(context, {
+				authorization: 'Bearer token',
+				cookieHeader: 'session=abc123',
+				sessionId: 'session-value',
+				visibleField: 'safe',
+			});
+
+			const entry = JSON.parse(stderrOutput[0]!);
+			expect(entry.args.authorization).toBe('[REDACTED]');
+			expect(entry.args.cookieHeader).toBe('[REDACTED]');
+			expect(entry.args.sessionId).toBe('[REDACTED]');
+			expect(entry.args.visibleField).toBe('safe');
+		});
 	});
 
 	describe('logToolResult', () => {

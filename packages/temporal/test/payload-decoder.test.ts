@@ -146,6 +146,35 @@ describe('PayloadDecoder', () => {
 			expect(results[0]!.decoded).toBe(false);
 			expect(results[0]!.reason).toContain('private address');
 		});
+
+		test('allows public hostnames that start with "fc"', async () => {
+			const decoder = new PayloadDecoder({
+				codecEndpoint: 'https://fc.example.com/decode',
+			});
+			const originalFetch = globalThis.fetch;
+			const fetchMock = mock(async () =>
+				new Response(
+					JSON.stringify({
+						payloads: [{ value: 'decoded' }],
+					}),
+					{ status: 200 },
+				),
+			) as any;
+			globalThis.fetch = fetchMock;
+
+			try {
+				const payload = {
+					metadata: { encoding: 'binary/encrypted' },
+					data: new Uint8Array([1, 2, 3]),
+				};
+
+				const results = await decoder.decode([payload]);
+				expect(results[0]!.decoded).toBe(true);
+				expect(fetchMock).toHaveBeenCalled();
+			} finally {
+				globalThis.fetch = originalFetch;
+			}
+		});
 	});
 
 	describe('allowed private addresses', () => {

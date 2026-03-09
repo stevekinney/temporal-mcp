@@ -5,6 +5,7 @@ import { buildRequestContext } from '../safety/request-context.ts';
 import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
+import { resolveTemporalPolicyScope } from './policy-context.ts';
 
 export function registerConnectionTools(
 	context: ToolRegistrationContext,
@@ -34,8 +35,9 @@ export function registerConnectionTools(
 
 			try {
 				const contract = getToolContract('temporal.connection.check');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);

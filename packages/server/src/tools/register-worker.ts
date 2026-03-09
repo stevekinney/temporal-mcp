@@ -5,6 +5,7 @@ import { buildRequestContext } from '../safety/request-context.ts';
 import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
+import { resolveTemporalPolicyScope } from './policy-context.ts';
 
 export function registerWorkerTools(context: ToolRegistrationContext): void {
 	const { server, connectionManager, config, auditLogger } = context;
@@ -35,8 +36,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 
 			try {
 				const contract = getToolContract('temporal.worker.versioning-rules');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -51,9 +53,8 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 					'../../../temporal/src/tools/worker/versioning-rules.ts'
 				);
 				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(profile);
 				const rules = await getVersioningRules(client, {
-					namespace: profileConfig.namespace,
+					namespace: policyScope.namespace,
 					taskQueue,
 				});
 				const result = successResponse(redactSensitiveFields(rules));
@@ -96,8 +97,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 
 			try {
 				const contract = getToolContract('temporal.worker.task-reachability');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -154,8 +156,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 
 			try {
 				const contract = getToolContract('temporal.worker.deployment.list');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -170,9 +173,8 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 					'../../../temporal/src/tools/worker/deployment.ts'
 				);
 				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(profile);
 				const deployments = await listWorkerDeployments(client, {
-					namespace: profileConfig.namespace,
+					namespace: policyScope.namespace,
 					pageSize,
 				});
 				const result = successResponse(redactSensitiveFields(deployments));
@@ -210,8 +212,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 
 			try {
 				const contract = getToolContract('temporal.worker.deployment.describe');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -226,9 +229,8 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 					'../../../temporal/src/tools/worker/deployment.ts'
 				);
 				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(profile);
 				const description = await describeWorkerDeployment(client, {
-					namespace: profileConfig.namespace,
+					namespace: policyScope.namespace,
 					deploymentName,
 				});
 				const result = successResponse(redactSensitiveFields(description));
@@ -267,8 +269,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 
 			try {
 				const contract = getToolContract('temporal.worker.deployment.version.describe');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -283,9 +286,8 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 					'../../../temporal/src/tools/worker/deployment.ts'
 				);
 				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(profile);
 				const description = await describeWorkerDeploymentVersion(client, {
-					namespace: profileConfig.namespace,
+					namespace: policyScope.namespace,
 					deploymentName,
 					buildId,
 				});
@@ -325,8 +327,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 
 			try {
 				const contract = getToolContract('temporal.worker.deployment.reachability');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -341,9 +344,8 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 					'../../../temporal/src/tools/worker/deployment.ts'
 				);
 				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(profile);
 				const reachability = await getDeploymentReachability(client, {
-					namespace: profileConfig.namespace,
+					namespace: policyScope.namespace,
 					deploymentName,
 				});
 				const result = successResponse(redactSensitiveFields(reachability));

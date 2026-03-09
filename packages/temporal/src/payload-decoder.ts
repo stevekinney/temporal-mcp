@@ -1,3 +1,5 @@
+import { isIP } from 'node:net';
+
 export interface DecodedPayload {
 	decoded: boolean;
 	data?: unknown;
@@ -5,26 +7,46 @@ export interface DecodedPayload {
 	reason?: string;
 }
 
-const PRIVATE_RANGES = [
+const PRIVATE_IPV4_RANGES = [
 	/^10\./,
 	/^172\.(1[6-9]|2\d|3[01])\./,
 	/^192\.168\./,
 	/^127\./,
 	/^0\./,
 	/^169\.254\./,
-	/^::1$/,
-	/^fc/,
-	/^fd/,
-	/^fe80:/,
+];
+
+const PRIVATE_IPV6_RANGES = [
+	/^::1$/i,
+	/^fc[0-9a-f]{2}:/i,
+	/^fd[0-9a-f]{2}:/i,
+	/^fe80:/i,
+];
+
+const PRIVATE_HOSTNAMES = [
 	/^localhost$/i,
 ];
 
 function isPrivateAddress(url: string): boolean {
 	try {
 		const parsed = new URL(url);
-		return PRIVATE_RANGES.some((pattern) =>
-			pattern.test(parsed.hostname),
-		);
+		if (PRIVATE_HOSTNAMES.some((pattern) => pattern.test(parsed.hostname))) {
+			return true;
+		}
+
+		const ipVersion = isIP(parsed.hostname);
+		if (ipVersion === 4) {
+			return PRIVATE_IPV4_RANGES.some((pattern) =>
+				pattern.test(parsed.hostname),
+			);
+		}
+		if (ipVersion === 6) {
+			return PRIVATE_IPV6_RANGES.some((pattern) =>
+				pattern.test(parsed.hostname),
+			);
+		}
+
+		return false;
 	} catch {
 		return true; // Treat unparseable URLs as private
 	}

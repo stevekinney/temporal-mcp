@@ -18,6 +18,25 @@ export function getSyncMetaPath(): string {
 	return join(homedir(), '.temporal-mcp', 'sync-meta.json');
 }
 
+function createSyncError(message: string, retryable: boolean): {
+	ok: false;
+	error: { code: 'SYNC_FAILED'; message: string; retryable: boolean };
+} {
+	return {
+		ok: false,
+		error: {
+			code: 'SYNC_FAILED',
+			message,
+			retryable,
+		},
+	};
+}
+
+function formatStderr(stderr: Uint8Array): string {
+	const text = stderr.toString().trim();
+	return text.length > 0 ? text : 'No stderr output available.';
+}
+
 export async function syncDocs(): Promise<SyncMetadata> {
 	// Check if git is available
 	const gitCheck = Bun.spawnSync(['git', '--version']);
@@ -43,8 +62,14 @@ export async function syncDocs(): Promise<SyncMetadata> {
 		const pull = Bun.spawnSync(['git', '-C', corpusPath, 'pull', '--ff-only']);
 		if (pull.exitCode !== 0) {
 			// Try reset and pull
-			Bun.spawnSync(['git', '-C', corpusPath, 'fetch', 'origin']);
-			Bun.spawnSync([
+			const fetch = Bun.spawnSync(['git', '-C', corpusPath, 'fetch', 'origin']);
+			if (fetch.exitCode !== 0) {
+				throw createSyncError(
+					`Failed to fetch docs repository after pull failed: ${formatStderr(fetch.stderr)}`,
+					true,
+				);
+			}
+			const reset = Bun.spawnSync([
 				'git',
 				'-C',
 				corpusPath,
@@ -52,6 +77,12 @@ export async function syncDocs(): Promise<SyncMetadata> {
 				'--hard',
 				'origin/main',
 			]);
+			if (reset.exitCode !== 0) {
+				throw createSyncError(
+					`Failed to reset docs repository after pull failed: ${formatStderr(reset.stderr)}`,
+					true,
+				);
+			}
 		}
 	} else {
 		// Shallow clone for speed
@@ -64,14 +95,10 @@ export async function syncDocs(): Promise<SyncMetadata> {
 			corpusPath,
 		]);
 		if (clone.exitCode !== 0) {
-			throw {
-				ok: false,
-				error: {
-					code: 'SYNC_FAILED',
-					message: `Failed to clone docs repository: ${clone.stderr.toString()}`,
-					retryable: true,
-				},
-			};
+			throw createSyncError(
+				`Failed to clone docs repository: ${formatStderr(clone.stderr)}`,
+				true,
+			);
 		}
 	}
 
@@ -83,6 +110,12 @@ export async function syncDocs(): Promise<SyncMetadata> {
 		'rev-parse',
 		'HEAD',
 	]);
+	if (shaResult.exitCode !== 0) {
+		throw createSyncError(
+			`Failed to read docs repository commit SHA: ${formatStderr(shaResult.stderr)}`,
+			true,
+		);
+	}
 	const commitSha = shaResult.stdout.toString().trim();
 
 	const metadata: SyncMetadata = {

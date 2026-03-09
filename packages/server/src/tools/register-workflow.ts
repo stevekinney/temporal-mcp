@@ -5,19 +5,23 @@ import { buildRequestContext } from '../safety/request-context.ts';
 import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
+import { resolveTemporalPolicyScope } from './policy-context.ts';
 
 function policyGate(
 	context: ToolRegistrationContext,
 	toolName: string,
 	profile: string | undefined,
+	namespace?: string,
 ) {
 	const contract = getToolContract(toolName);
 	if (!contract) return null;
-	const decision = evaluatePolicy(context.config.policy, contract, {
-		profile,
-	});
+	const policyScope = resolveTemporalPolicyScope(context, profile, namespace);
+	const decision = evaluatePolicy(context.config.policy, contract, policyScope);
 	context.auditLogger.logPolicyDecision(
-		buildRequestContext(toolName, { profile }),
+		buildRequestContext(toolName, {
+			profile: policyScope.profile,
+			namespace: policyScope.namespace,
+		}),
 		decision,
 	);
 	if (!decision.allowed) {

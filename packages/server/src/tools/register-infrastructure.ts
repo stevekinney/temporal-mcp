@@ -5,6 +5,7 @@ import { buildRequestContext } from '../safety/request-context.ts';
 import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
+import { resolveTemporalPolicyScope } from './policy-context.ts';
 
 export function registerInfrastructureTools(
 	context: ToolRegistrationContext,
@@ -37,8 +38,9 @@ export function registerInfrastructureTools(
 
 			try {
 				const contract = getToolContract('temporal.task-queue.describe');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -53,9 +55,8 @@ export function registerInfrastructureTools(
 					'../../../temporal/src/tools/infrastructure/task-queue-describe.ts'
 				);
 				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(profile);
 				const description = await describeTaskQueueTool(client, {
-					namespace: profileConfig.namespace,
+					namespace: policyScope.namespace,
 					taskQueue,
 				});
 				const result = successResponse(redactSensitiveFields(description));
@@ -94,8 +95,9 @@ export function registerInfrastructureTools(
 
 			try {
 				const contract = getToolContract('temporal.task-queue.configuration');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -110,9 +112,8 @@ export function registerInfrastructureTools(
 					'../../../temporal/src/tools/infrastructure/task-queue-configuration.ts'
 				);
 				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(profile);
 				const configuration = await getTaskQueueConfigurationTool(client, {
-					namespace: profileConfig.namespace,
+					namespace: policyScope.namespace,
 					taskQueue,
 				});
 				const result = successResponse(redactSensitiveFields(configuration));
@@ -153,8 +154,9 @@ export function registerInfrastructureTools(
 
 			try {
 				const contract = getToolContract('temporal.namespace.list');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -203,8 +205,13 @@ export function registerInfrastructureTools(
 
 			try {
 				const contract = getToolContract('temporal.namespace.describe');
+				const policyScope = resolveTemporalPolicyScope(
+					context,
+					profile,
+					namespace,
+				);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -258,8 +265,13 @@ export function registerInfrastructureTools(
 
 			try {
 				const contract = getToolContract('temporal.search-attributes.list');
+				const policyScope = resolveTemporalPolicyScope(
+					context,
+					profile,
+					namespace,
+				);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
@@ -274,9 +286,8 @@ export function registerInfrastructureTools(
 					'../../../temporal/src/tools/infrastructure/search-attributes-list.ts'
 				);
 				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(profile);
 				const attributes = await listSearchAttributesTool(client, {
-					namespace: namespace ?? profileConfig.namespace,
+					namespace: policyScope.namespace,
 				});
 				const result = successResponse(redactSensitiveFields(attributes));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -311,8 +322,9 @@ export function registerInfrastructureTools(
 
 			try {
 				const contract = getToolContract('temporal.cluster.info');
+				const policyScope = resolveTemporalPolicyScope(context, profile);
 				if (contract) {
-					const decision = evaluatePolicy(config.policy, contract, { profile });
+					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
 						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);

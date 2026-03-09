@@ -2,7 +2,7 @@
 
 An MCP server that gives AI agents read-only access to your Temporal infrastructure.
 
-The server exposes 28 tools across six categories—workflows, schedules, infrastructure, workers, connections, and documentation—along with 5 resource types, a built-in documentation search subsystem, and a policy engine that controls what agents are allowed to see. Every tool is read-only. There are no writes, no mutations, no side effects.
+The server exposes 28 tools across six categories—workflows, schedules, infrastructure, workers, connections, and documentation—along with 5 resource types, a built-in documentation search subsystem, and a policy engine that controls what agents are allowed to see. Temporal operations are read-only (no writes to Temporal state). The `docs.refresh` tool does have local side effects: it performs network `git` syncs and writes cache/index files under `~/.temporal-mcp`.
 
 ## Features
 
@@ -12,7 +12,7 @@ The server exposes 28 tools across six categories—workflows, schedules, infras
 - **Multi-profile connections** to multiple Temporal clusters (self-hosted and Cloud) from one server
 - **Policy engine** with four modes, glob-based tool filtering, and profile/namespace allowlists
 - **Audit logging** with structured JSON to stderr and automatic sensitive field redaction
-- **Zero write operations** by design—no starts, signals, cancels, terminates, or deletes
+- **Zero Temporal write operations** by design—no starts, signals, cancels, terminates, or deletes
 
 ## Prerequisites
 
@@ -251,7 +251,7 @@ Setting `hardReadOnly` to `true` overrides every other policy setting and locks 
 
 ### Break-glass override
 
-The `unsafe` mode requires the `TEMPORAL_MCP_BREAK_GLASS` environment variable to be set. Without it, the server refuses to start in unsafe mode. This exists as a deliberate speed bump—you have to opt in twice.
+The `unsafe` mode requires the `TEMPORAL_MCP_BREAK_GLASS` environment variable to be set. Without it, unsafe tool calls are denied with `BREAK_GLASS_REQUIRED`. This exists as a deliberate speed bump—you have to opt in twice.
 
 ## Safety
 
@@ -261,9 +261,11 @@ Every tool invocation is logged as structured JSON to stderr, including the tool
 
 ### Sensitive field redaction
 
-Responses are automatically scanned for sensitive fields. Any key matching one of these patterns (case-insensitive) has its value replaced with `[REDACTED]`:
+Tool responses are automatically scanned for sensitive fields. Any key matching one of these patterns (case-insensitive) has its value replaced with `[REDACTED]`:
 
 `apiKey`, `password`, `token`, `secret`, `credential`, `authorization`, `cookie`, `session`
+
+Resource URI reads are currently returned as raw JSON and should be treated as unredacted.
 
 ### What this server does not do
 

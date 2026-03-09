@@ -1,5 +1,6 @@
 import type { RequestContext } from './request-context.ts';
 import type { PolicyDecision } from '../contracts/policy.ts';
+import { redactSensitiveFields } from './redaction.ts';
 
 export interface AuditEntry {
 	type: 'tool_call' | 'tool_result' | 'policy_decision';
@@ -50,20 +51,7 @@ export class AuditLogger {
 	private sanitizeArgs(
 		args: Record<string, unknown>,
 	): Record<string, unknown> {
-		const sanitized = { ...args };
-		const sensitiveKeys = [
-			'apiKey',
-			'password',
-			'token',
-			'secret',
-			'credential',
-		];
-		for (const key of Object.keys(sanitized)) {
-			if (sensitiveKeys.some((s) => key.toLowerCase().includes(s.toLowerCase()))) {
-				sanitized[key] = '[REDACTED]';
-			}
-		}
-		return sanitized;
+		return redactSensitiveFields(args) as Record<string, unknown>;
 	}
 
 	private emit(entry: AuditEntry): void {

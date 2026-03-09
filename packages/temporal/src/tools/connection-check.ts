@@ -13,9 +13,10 @@ export async function checkConnection(
 	connectionManager: TemporalConnectionManager,
 	profileName?: string,
 ): Promise<ConnectionCheckResult> {
-	const profile = profileName ?? 'default';
+	let profile = profileName ?? 'default';
 	try {
-		const client = await connectionManager.getClient(profileName);
+		profile = connectionManager.resolveProfileName(profileName);
+		const client = await connectionManager.getClient(profile);
 		const info = await getSystemInfo(client);
 		return { connected: true, profile, serverInfo: info, error: null };
 	} catch (error) {
