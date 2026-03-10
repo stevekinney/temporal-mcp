@@ -8,6 +8,21 @@ import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
 import { inputSchema } from './zod-compat.ts';
 
+function requireToolContract(toolName: string) {
+	const contract = getToolContract(toolName);
+	if (!contract) {
+		throw {
+			ok: false,
+			error: {
+				code: 'TOOL_NOT_FOUND',
+				message: `Tool "${toolName}" is not registered in the capability matrix`,
+				retryable: false,
+			},
+		};
+	}
+	return contract;
+}
+
 export function registerInfrastructureTools(
 	context: ToolRegistrationContext,
 ): void {
@@ -38,9 +53,9 @@ export function registerInfrastructureTools(
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.task-queue.describe');
+				const contract = requireToolContract('temporal.task-queue.describe');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -95,9 +110,9 @@ export function registerInfrastructureTools(
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.task-queue.configuration');
+				const contract = requireToolContract('temporal.task-queue.configuration');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -154,9 +169,9 @@ export function registerInfrastructureTools(
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.namespace.list');
+				const contract = requireToolContract('temporal.namespace.list');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -205,13 +220,13 @@ export function registerInfrastructureTools(
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.namespace.describe');
+				const contract = requireToolContract('temporal.namespace.describe');
 				const policyScope = resolveTemporalPolicyScope(
 					context,
 					profile,
 					namespace,
 				);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -265,13 +280,13 @@ export function registerInfrastructureTools(
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.search-attributes.list');
+				const contract = requireToolContract('temporal.search-attributes.list');
 				const policyScope = resolveTemporalPolicyScope(
 					context,
 					profile,
 					namespace,
 				);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -322,9 +337,9 @@ export function registerInfrastructureTools(
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.cluster.info');
+				const contract = requireToolContract('temporal.cluster.info');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {

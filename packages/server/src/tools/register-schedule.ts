@@ -8,6 +8,21 @@ import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
 import { inputSchema } from './zod-compat.ts';
 
+function requireToolContract(toolName: string) {
+	const contract = getToolContract(toolName);
+	if (!contract) {
+		throw {
+			ok: false,
+			error: {
+				code: 'TOOL_NOT_FOUND',
+				message: `Tool "${toolName}" is not registered in the capability matrix`,
+				retryable: false,
+			},
+		};
+	}
+	return contract;
+}
+
 export function registerScheduleTools(context: ToolRegistrationContext): void {
 	const { server, connectionManager, config, auditLogger } = context;
 
@@ -48,8 +63,8 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 					pageSize,
 				});
 
-				const contract = getToolContract('temporal.schedule.list');
-				if (contract) {
+				const contract = requireToolContract('temporal.schedule.list');
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -108,8 +123,8 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 					scheduleId,
 				});
 
-				const contract = getToolContract('temporal.schedule.describe');
-				if (contract) {
+				const contract = requireToolContract('temporal.schedule.describe');
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -191,8 +206,8 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 					endTime: rangeEnd,
 				});
 
-				const contract = getToolContract('temporal.schedule.matching-times');
-				if (contract) {
+				const contract = requireToolContract('temporal.schedule.matching-times');
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {

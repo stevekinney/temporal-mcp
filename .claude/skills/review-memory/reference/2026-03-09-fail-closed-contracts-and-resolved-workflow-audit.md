@@ -1,0 +1,2 @@
+- Treat missing tool contracts from the capability matrix as hard `TOOL_NOT_FOUND` errors; never skip policy evaluation when a contract lookup fails.
+- In workflow tool handlers, resolve policy scope before logging or executing calls so audit context and `getClient(...)` always use the same resolved profile/namespace.

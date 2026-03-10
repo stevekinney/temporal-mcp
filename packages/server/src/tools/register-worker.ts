@@ -8,6 +8,21 @@ import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
 import { inputSchema } from './zod-compat.ts';
 
+function requireToolContract(toolName: string) {
+	const contract = getToolContract(toolName);
+	if (!contract) {
+		throw {
+			ok: false,
+			error: {
+				code: 'TOOL_NOT_FOUND',
+				message: `Tool "${toolName}" is not registered in the capability matrix`,
+				retryable: false,
+			},
+		};
+	}
+	return contract;
+}
+
 export function registerWorkerTools(context: ToolRegistrationContext): void {
 	const { server, connectionManager, config, auditLogger } = context;
 
@@ -36,9 +51,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.worker.versioning-rules');
+				const contract = requireToolContract('temporal.worker.versioning-rules');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -97,9 +112,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.worker.task-reachability');
+				const contract = requireToolContract('temporal.worker.task-reachability');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -157,9 +172,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.worker.deployment.list');
+				const contract = requireToolContract('temporal.worker.deployment.list');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -213,9 +228,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.worker.deployment.describe');
+				const contract = requireToolContract('temporal.worker.deployment.describe');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -270,9 +285,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.worker.deployment.version.describe');
+				const contract = requireToolContract('temporal.worker.deployment.version.describe');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -328,9 +343,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('temporal.worker.deployment.reachability');
+				const contract = requireToolContract('temporal.worker.deployment.reachability');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				if (contract) {
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {

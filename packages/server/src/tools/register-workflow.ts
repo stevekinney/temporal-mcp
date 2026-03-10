@@ -6,45 +6,68 @@ import { evaluatePolicy } from '../policy/evaluate.ts';
 import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
-import type { RequestContext } from '../safety/request-context.ts';
 import { inputSchema } from './zod-compat.ts';
+
+type WorkflowPolicyGateResult =
+	| {
+			policyScope: ReturnType<typeof resolveTemporalPolicyScope>;
+			decision: ReturnType<typeof evaluatePolicy>;
+			blocked: null;
+	  }
+	| {
+			policyScope: ReturnType<typeof resolveTemporalPolicyScope> | null;
+			decision: ReturnType<typeof evaluatePolicy> | null;
+			blocked: ReturnType<typeof errorResponse>;
+	  };
 
 function policyGate(
 	context: ToolRegistrationContext,
-	requestContext: RequestContext,
 	toolName: string,
 	profile: string | undefined,
 	namespace?: string,
-) {
+): WorkflowPolicyGateResult {
 	const contract = getToolContract(toolName);
 	if (!contract) {
-		return errorResponse({
-			ok: false,
-			error: {
-				code: 'TOOL_NOT_FOUND',
-				message: `Tool "${toolName}" is not registered in the capability matrix`,
-				retryable: false,
-			},
-		});
+		return {
+			policyScope: null,
+			decision: null,
+			blocked: errorResponse({
+				ok: false,
+				error: {
+					code: 'TOOL_NOT_FOUND',
+					message: `Tool "${toolName}" is not registered in the capability matrix`,
+					retryable: false,
+				},
+			}),
+		};
 	}
+
 	const policyScope = resolveTemporalPolicyScope(context, profile, namespace);
 	const decision = evaluatePolicy(context.config.policy, contract, policyScope);
-	context.auditLogger.logPolicyDecision(requestContext, decision);
 	if (!decision.allowed) {
-		return errorResponse({
-			ok: false,
-			error: {
-				code: decision.code,
-				message: decision.reason,
-				retryable: false,
-			},
-		});
+		return {
+			policyScope,
+			decision,
+			blocked: errorResponse({
+				ok: false,
+				error: {
+					code: decision.code,
+					message: decision.reason,
+					retryable: false,
+				},
+			}),
+		};
 	}
-	return null;
+
+	return {
+		policyScope,
+		decision,
+		blocked: null,
+	};
 }
 
 export function registerWorkflowTools(context: ToolRegistrationContext): void {
-	const { server, connectionManager, config, auditLogger } = context;
+	const { server, connectionManager, auditLogger } = context;
 
 	server.registerTool(
 		'temporal.workflow.list',
@@ -76,25 +99,30 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				{ profile, query, pageSize },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, query, pageSize });
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(
-					context,
-					requestContext,
-					'temporal.workflow.list',
-					profile,
-				);
-				if (blocked) {
+				const gate = policyGate(context, 'temporal.workflow.list', profile);
+				if (gate.policyScope) {
+					requestContext.profile = gate.policyScope.profile;
+				}
+				auditLogger.logToolCall(requestContext, {
+					profile: gate.policyScope?.profile ?? profile,
+					query,
+					pageSize,
+				});
+				if (gate.decision) {
+					auditLogger.logPolicyDecision(requestContext, gate.decision);
+				}
+				if (gate.blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-					return blocked;
+					return gate.blocked;
 				}
 
 				const { listWorkflows } = await import(
 					'../../../temporal/src/tools/workflow/list.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(gate.policyScope.profile);
 				const workflows = await listWorkflows(client, { query, pageSize });
 				const result = successResponse(redactSensitiveFields(workflows));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -129,25 +157,30 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				{ profile, workflowId, runId },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, workflowId, runId });
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(
-					context,
-					requestContext,
-					'temporal.workflow.describe',
-					profile,
-				);
-				if (blocked) {
+				const gate = policyGate(context, 'temporal.workflow.describe', profile);
+				if (gate.policyScope) {
+					requestContext.profile = gate.policyScope.profile;
+				}
+				auditLogger.logToolCall(requestContext, {
+					profile: gate.policyScope?.profile ?? profile,
+					workflowId,
+					runId,
+				});
+				if (gate.decision) {
+					auditLogger.logPolicyDecision(requestContext, gate.decision);
+				}
+				if (gate.blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-					return blocked;
+					return gate.blocked;
 				}
 
 				const { describeWorkflow } = await import(
 					'../../../temporal/src/tools/workflow/describe.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(gate.policyScope.profile);
 				const description = await describeWorkflow(client, { workflowId, runId });
 				const result = successResponse(redactSensitiveFields(description));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -180,25 +213,29 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				{ profile, query },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, query });
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(
-					context,
-					requestContext,
-					'temporal.workflow.count',
-					profile,
-				);
-				if (blocked) {
+				const gate = policyGate(context, 'temporal.workflow.count', profile);
+				if (gate.policyScope) {
+					requestContext.profile = gate.policyScope.profile;
+				}
+				auditLogger.logToolCall(requestContext, {
+					profile: gate.policyScope?.profile ?? profile,
+					query,
+				});
+				if (gate.decision) {
+					auditLogger.logPolicyDecision(requestContext, gate.decision);
+				}
+				if (gate.blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-					return blocked;
+					return gate.blocked;
 				}
 
 				const { countWorkflows } = await import(
 					'../../../temporal/src/tools/workflow/count.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(gate.policyScope.profile);
 				const countResult = await countWorkflows(client, { query });
 				const result = successResponse(redactSensitiveFields(countResult));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -234,25 +271,30 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				{ profile, workflowId, runId },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, workflowId, runId });
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(
-					context,
-					requestContext,
-					'temporal.workflow.result',
-					profile,
-				);
-				if (blocked) {
+				const gate = policyGate(context, 'temporal.workflow.result', profile);
+				if (gate.policyScope) {
+					requestContext.profile = gate.policyScope.profile;
+				}
+				auditLogger.logToolCall(requestContext, {
+					profile: gate.policyScope?.profile ?? profile,
+					workflowId,
+					runId,
+				});
+				if (gate.decision) {
+					auditLogger.logPolicyDecision(requestContext, gate.decision);
+				}
+				if (gate.blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-					return blocked;
+					return gate.blocked;
 				}
 
 				const { getWorkflowResult } = await import(
 					'../../../temporal/src/tools/workflow/result.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(gate.policyScope.profile);
 				const workflowResult = await getWorkflowResult(client, { workflowId, runId });
 				const result = successResponse(redactSensitiveFields(workflowResult));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -292,25 +334,31 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				{ profile, workflowId, runId, queryType },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, workflowId, runId, queryType });
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(
-					context,
-					requestContext,
-					'temporal.workflow.query',
-					profile,
-				);
-				if (blocked) {
+				const gate = policyGate(context, 'temporal.workflow.query', profile);
+				if (gate.policyScope) {
+					requestContext.profile = gate.policyScope.profile;
+				}
+				auditLogger.logToolCall(requestContext, {
+					profile: gate.policyScope?.profile ?? profile,
+					workflowId,
+					runId,
+					queryType,
+				});
+				if (gate.decision) {
+					auditLogger.logPolicyDecision(requestContext, gate.decision);
+				}
+				if (gate.blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-					return blocked;
+					return gate.blocked;
 				}
 
 				const { queryWorkflow } = await import(
 					'../../../temporal/src/tools/workflow/query.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(gate.policyScope.profile);
 				const queryResult = await queryWorkflow(client, {
 					workflowId,
 					runId,
@@ -352,25 +400,30 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				{ profile, workflowId, runId },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, workflowId, runId });
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(
-					context,
-					requestContext,
-					'temporal.workflow.history',
-					profile,
-				);
-				if (blocked) {
+				const gate = policyGate(context, 'temporal.workflow.history', profile);
+				if (gate.policyScope) {
+					requestContext.profile = gate.policyScope.profile;
+				}
+				auditLogger.logToolCall(requestContext, {
+					profile: gate.policyScope?.profile ?? profile,
+					workflowId,
+					runId,
+				});
+				if (gate.decision) {
+					auditLogger.logPolicyDecision(requestContext, gate.decision);
+				}
+				if (gate.blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-					return blocked;
+					return gate.blocked;
 				}
 
 				const { getWorkflowHistory } = await import(
 					'../../../temporal/src/tools/workflow/history.ts'
 				);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(gate.policyScope.profile);
 				const history = await getWorkflowHistory(client, { workflowId, runId });
 				const result = successResponse(redactSensitiveFields(history));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
@@ -410,30 +463,33 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				{ profile, workflowId, runId, pageSize },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, workflowId, runId, pageSize });
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(
-					context,
-					requestContext,
-					'temporal.workflow.history.reverse',
-					profile,
-				);
-				if (blocked) {
+				const gate = policyGate(context, 'temporal.workflow.history.reverse', profile);
+				if (gate.policyScope) {
+					requestContext.profile = gate.policyScope.profile;
+				}
+				auditLogger.logToolCall(requestContext, {
+					profile: gate.policyScope?.profile ?? profile,
+					workflowId,
+					runId,
+					pageSize,
+				});
+				if (gate.decision) {
+					auditLogger.logPolicyDecision(requestContext, gate.decision);
+				}
+				if (gate.blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-					return blocked;
+					return gate.blocked;
 				}
 
 				const { getWorkflowHistoryReverse } = await import(
 					'../../../temporal/src/tools/workflow/history.ts'
 				);
-				const client = await connectionManager.getClient(profile);
-				const profileConfig = connectionManager.getProfileConfiguration(
-					profile || undefined,
-				);
+				const client = await connectionManager.getClient(gate.policyScope.profile);
 				const history = await getWorkflowHistoryReverse(client, {
-					namespace: profileConfig.namespace,
+					namespace: gate.policyScope.namespace,
 					workflowId,
 					runId,
 					pageSize,
@@ -473,26 +529,31 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				{ profile, workflowId, runId },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, workflowId, runId });
 			const startTime = Date.now();
 
 			try {
-				const blocked = policyGate(
-					context,
-					requestContext,
-					'temporal.workflow.history.summarize',
-					profile,
-				);
-				if (blocked) {
+				const gate = policyGate(context, 'temporal.workflow.history.summarize', profile);
+				if (gate.policyScope) {
+					requestContext.profile = gate.policyScope.profile;
+				}
+				auditLogger.logToolCall(requestContext, {
+					profile: gate.policyScope?.profile ?? profile,
+					workflowId,
+					runId,
+				});
+				if (gate.decision) {
+					auditLogger.logPolicyDecision(requestContext, gate.decision);
+				}
+				if (gate.blocked) {
 					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-					return blocked;
+					return gate.blocked;
 				}
 
 				const { getWorkflowHistory, summarizeWorkflowHistory } =
 					await import(
 						'../../../temporal/src/tools/workflow/history.ts'
 					);
-				const client = await connectionManager.getClient(profile);
+				const client = await connectionManager.getClient(gate.policyScope.profile);
 				const history = (await getWorkflowHistory(client, {
 					workflowId,
 					runId,

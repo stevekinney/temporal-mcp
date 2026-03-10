@@ -8,6 +8,21 @@ import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
 import { inputSchema } from './zod-compat.ts';
 
+function requireToolContract(toolName: string) {
+	const contract = getToolContract(toolName);
+	if (!contract) {
+		throw {
+			ok: false,
+			error: {
+				code: 'TOOL_NOT_FOUND',
+				message: `Tool "${toolName}" is not registered in the capability matrix`,
+				retryable: false,
+			},
+		};
+	}
+	return contract;
+}
+
 export function registerConnectionTools(
 	context: ToolRegistrationContext,
 ): void {
@@ -44,8 +59,8 @@ export function registerConnectionTools(
 					profile: policyScope.profile,
 				});
 
-				const contract = getToolContract('temporal.connection.check');
-				if (contract) {
+				const contract = requireToolContract('temporal.connection.check');
+				{
 					const decision = evaluatePolicy(config.policy, contract, policyScope);
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {

@@ -7,6 +7,21 @@ import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { inputSchema } from './zod-compat.ts';
 
+function requireToolContract(toolName: string) {
+	const contract = getToolContract(toolName);
+	if (!contract) {
+		throw {
+			ok: false,
+			error: {
+				code: 'TOOL_NOT_FOUND',
+				message: `Tool "${toolName}" is not registered in the capability matrix`,
+				retryable: false,
+			},
+		};
+	}
+	return contract;
+}
+
 export function registerDocsTools(context: ToolRegistrationContext): void {
 	const { server, config, auditLogger, taskStore } = context;
 
@@ -23,8 +38,8 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('docs.status');
-				if (contract) {
+				const contract = requireToolContract('docs.status');
+				{
 					const decision = evaluatePolicy(config.policy, contract, {});
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -81,8 +96,8 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('docs.search');
-				if (contract) {
+				const contract = requireToolContract('docs.search');
+				{
 					const decision = evaluatePolicy(config.policy, contract, {});
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -145,8 +160,8 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('docs.get');
-				if (contract) {
+				const contract = requireToolContract('docs.get');
+				{
 					const decision = evaluatePolicy(config.policy, contract, {});
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -195,8 +210,8 @@ function registerDocsRefreshSynchronous(context: ToolRegistrationContext): void 
 			const startTime = Date.now();
 
 			try {
-				const contract = getToolContract('docs.refresh');
-				if (contract) {
+				const contract = requireToolContract('docs.refresh');
+				{
 					const decision = evaluatePolicy(config.policy, contract, {});
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
@@ -238,8 +253,8 @@ function registerDocsRefreshWithTasks(context: ToolRegistrationContext): void {
 				const requestContext = buildRequestContext('docs.refresh', {}, extra);
 				auditLogger.logToolCall(requestContext, {});
 
-				const contract = getToolContract('docs.refresh');
-				if (contract) {
+				const contract = requireToolContract('docs.refresh');
+				{
 					const decision = evaluatePolicy(config.policy, contract, {});
 					auditLogger.logPolicyDecision(requestContext, decision);
 					if (!decision.allowed) {
