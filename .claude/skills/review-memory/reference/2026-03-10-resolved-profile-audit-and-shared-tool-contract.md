@@ -1,0 +1,2 @@
+- For tools that resolve policy scope, emit `tool_call` audit logs only after profile resolution so audited profile always matches policy evaluation and execution profile.
+- Keep capability-matrix fail-closed behavior in one shared helper to prevent drift when contract lookup semantics need to change.

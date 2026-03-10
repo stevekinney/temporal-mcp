@@ -3,25 +3,10 @@ import type { ToolRegistrationContext } from './register-all.ts';
 import { errorResponse, successResponse } from './response-helpers.ts';
 import { buildRequestContext } from '../safety/request-context.ts';
 import { evaluatePolicy } from '../policy/evaluate.ts';
-import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
+import { requireToolContract } from './tool-contract.ts';
 import { inputSchema } from './zod-compat.ts';
-
-function requireToolContract(toolName: string) {
-	const contract = getToolContract(toolName);
-	if (!contract) {
-		throw {
-			ok: false,
-			error: {
-				code: 'TOOL_NOT_FOUND',
-				message: `Tool "${toolName}" is not registered in the capability matrix`,
-				retryable: false,
-			},
-		};
-	}
-	return contract;
-}
 
 export function registerConnectionTools(
 	context: ToolRegistrationContext,

@@ -3,25 +3,10 @@ import type { ToolRegistrationContext } from './register-all.ts';
 import { errorResponse, successResponse } from './response-helpers.ts';
 import { buildRequestContext } from '../safety/request-context.ts';
 import { evaluatePolicy } from '../policy/evaluate.ts';
-import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
+import { requireToolContract } from './tool-contract.ts';
 import { inputSchema } from './zod-compat.ts';
-
-function requireToolContract(toolName: string) {
-	const contract = getToolContract(toolName);
-	if (!contract) {
-		throw {
-			ok: false,
-			error: {
-				code: 'TOOL_NOT_FOUND',
-				message: `Tool "${toolName}" is not registered in the capability matrix`,
-				retryable: false,
-			},
-		};
-	}
-	return contract;
-}
 
 export function registerInfrastructureTools(
 	context: ToolRegistrationContext,
@@ -44,27 +29,34 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, taskQueue }: any, extra: any) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.task-queue.describe',
 				{ profile, taskQueue },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, taskQueue });
 			const startTime = Date.now();
 
 			try {
-				const contract = requireToolContract('temporal.task-queue.describe');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				{
-					const decision = evaluatePolicy(config.policy, contract, policyScope);
-					auditLogger.logPolicyDecision(requestContext, decision);
-					if (!decision.allowed) {
-						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-						return errorResponse({
-							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
-					}
+				requestContext = buildRequestContext(
+					'temporal.task-queue.describe',
+					{ profile: policyScope.profile, taskQueue },
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, {
+					profile: policyScope.profile,
+					taskQueue,
+				});
+
+				const contract = requireToolContract('temporal.task-queue.describe');
+				const decision = evaluatePolicy(config.policy, contract, policyScope);
+				auditLogger.logPolicyDecision(requestContext, decision);
+				if (!decision.allowed) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse({
+						ok: false,
+						error: { code: decision.code, message: decision.reason, retryable: false },
+					});
 				}
 
 				const { describeTaskQueueTool } = await import(
@@ -101,27 +93,34 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, taskQueue }: any, extra: any) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.task-queue.configuration',
 				{ profile, taskQueue },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, taskQueue });
 			const startTime = Date.now();
 
 			try {
-				const contract = requireToolContract('temporal.task-queue.configuration');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				{
-					const decision = evaluatePolicy(config.policy, contract, policyScope);
-					auditLogger.logPolicyDecision(requestContext, decision);
-					if (!decision.allowed) {
-						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-						return errorResponse({
-							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
-					}
+				requestContext = buildRequestContext(
+					'temporal.task-queue.configuration',
+					{ profile: policyScope.profile, taskQueue },
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, {
+					profile: policyScope.profile,
+					taskQueue,
+				});
+
+				const contract = requireToolContract('temporal.task-queue.configuration');
+				const decision = evaluatePolicy(config.policy, contract, policyScope);
+				auditLogger.logPolicyDecision(requestContext, decision);
+				if (!decision.allowed) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse({
+						ok: false,
+						error: { code: decision.code, message: decision.reason, retryable: false },
+					});
 				}
 
 				const { getTaskQueueConfigurationTool } = await import(
@@ -160,27 +159,34 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, pageSize }: any, extra: any) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.namespace.list',
 				{ profile, pageSize },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, pageSize });
 			const startTime = Date.now();
 
 			try {
-				const contract = requireToolContract('temporal.namespace.list');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				{
-					const decision = evaluatePolicy(config.policy, contract, policyScope);
-					auditLogger.logPolicyDecision(requestContext, decision);
-					if (!decision.allowed) {
-						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-						return errorResponse({
-							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
-					}
+				requestContext = buildRequestContext(
+					'temporal.namespace.list',
+					{ profile: policyScope.profile, pageSize },
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, {
+					profile: policyScope.profile,
+					pageSize,
+				});
+
+				const contract = requireToolContract('temporal.namespace.list');
+				const decision = evaluatePolicy(config.policy, contract, policyScope);
+				auditLogger.logPolicyDecision(requestContext, decision);
+				if (!decision.allowed) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse({
+						ok: false,
+						error: { code: decision.code, message: decision.reason, retryable: false },
+					});
 				}
 
 				const { listNamespacesTool } = await import(
@@ -211,31 +217,38 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, namespace }: any, extra: any) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.namespace.describe',
 				{ profile, namespace },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, namespace });
 			const startTime = Date.now();
 
 			try {
-				const contract = requireToolContract('temporal.namespace.describe');
 				const policyScope = resolveTemporalPolicyScope(
 					context,
 					profile,
 					namespace,
 				);
-				{
-					const decision = evaluatePolicy(config.policy, contract, policyScope);
-					auditLogger.logPolicyDecision(requestContext, decision);
-					if (!decision.allowed) {
-						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-						return errorResponse({
-							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
-					}
+				requestContext = buildRequestContext(
+					'temporal.namespace.describe',
+					{ profile: policyScope.profile, namespace },
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, {
+					profile: policyScope.profile,
+					namespace,
+				});
+
+				const contract = requireToolContract('temporal.namespace.describe');
+				const decision = evaluatePolicy(config.policy, contract, policyScope);
+				auditLogger.logPolicyDecision(requestContext, decision);
+				if (!decision.allowed) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse({
+						ok: false,
+						error: { code: decision.code, message: decision.reason, retryable: false },
+					});
 				}
 
 				const { describeNamespaceTool } = await import(
@@ -271,31 +284,38 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, namespace }: any, extra: any) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.search-attributes.list',
 				{ profile, namespace },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile, namespace });
 			const startTime = Date.now();
 
 			try {
-				const contract = requireToolContract('temporal.search-attributes.list');
 				const policyScope = resolveTemporalPolicyScope(
 					context,
 					profile,
 					namespace,
 				);
-				{
-					const decision = evaluatePolicy(config.policy, contract, policyScope);
-					auditLogger.logPolicyDecision(requestContext, decision);
-					if (!decision.allowed) {
-						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-						return errorResponse({
-							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
-					}
+				requestContext = buildRequestContext(
+					'temporal.search-attributes.list',
+					{ profile: policyScope.profile, namespace: policyScope.namespace },
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, {
+					profile: policyScope.profile,
+					namespace: policyScope.namespace,
+				});
+
+				const contract = requireToolContract('temporal.search-attributes.list');
+				const decision = evaluatePolicy(config.policy, contract, policyScope);
+				auditLogger.logPolicyDecision(requestContext, decision);
+				if (!decision.allowed) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse({
+						ok: false,
+						error: { code: decision.code, message: decision.reason, retryable: false },
+					});
 				}
 
 				const { listSearchAttributesTool } = await import(
@@ -328,27 +348,31 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile }: any, extra: any) => {
-			const requestContext = buildRequestContext(
+			let requestContext = buildRequestContext(
 				'temporal.cluster.info',
 				{ profile },
 				extra,
 			);
-			auditLogger.logToolCall(requestContext, { profile });
 			const startTime = Date.now();
 
 			try {
-				const contract = requireToolContract('temporal.cluster.info');
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				{
-					const decision = evaluatePolicy(config.policy, contract, policyScope);
-					auditLogger.logPolicyDecision(requestContext, decision);
-					if (!decision.allowed) {
-						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-						return errorResponse({
-							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
-					}
+				requestContext = buildRequestContext(
+					'temporal.cluster.info',
+					{ profile: policyScope.profile },
+					extra,
+				);
+				auditLogger.logToolCall(requestContext, { profile: policyScope.profile });
+
+				const contract = requireToolContract('temporal.cluster.info');
+				const decision = evaluatePolicy(config.policy, contract, policyScope);
+				auditLogger.logPolicyDecision(requestContext, decision);
+				if (!decision.allowed) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse({
+						ok: false,
+						error: { code: decision.code, message: decision.reason, retryable: false },
+					});
 				}
 
 				const { getClusterInfo } = await import(
