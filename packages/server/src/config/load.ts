@@ -3,6 +3,7 @@ import { DEFAULT_APP_CONFIG } from './schema.ts';
 import type { AppConfigContract } from '../contracts/config.ts';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { readFile } from 'node:fs/promises';
 
 const profileConfigSchema = z.object({
 	kind: z.enum(['self-hosted', 'cloud']),
@@ -113,9 +114,8 @@ function deepMerge(
 
 async function tryReadJsonFile(path: string): Promise<unknown | null> {
 	try {
-		const file = Bun.file(path);
-		if (!(await file.exists())) return null;
-		return await file.json();
+		const content = await readFile(path, 'utf8');
+		return JSON.parse(content);
 	} catch {
 		return null;
 	}

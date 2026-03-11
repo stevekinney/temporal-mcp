@@ -2,7 +2,19 @@
   "name": "@temporal-mcp/docs",
   "version": "0.1.0",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/types/docs/src/index.d.ts",
+  "files": ["dist"],
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/types/docs/src/index.d.ts"
+    }
+  },
+  "dependencies": {
+    "minisearch": "^7.2.0"
   }
 }

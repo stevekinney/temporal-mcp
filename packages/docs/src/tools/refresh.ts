@@ -1,5 +1,5 @@
-import { Glob } from 'bun';
 import { join } from 'node:path';
+import { readdir, readFile } from 'node:fs/promises';
 import { chunkDocument } from '../chunking.ts';
 import type { DocChunk } from '../chunking.ts';
 import { createSearchIndex, persistIndex } from '../indexing.ts';
@@ -15,7 +15,7 @@ export async function refreshDocs(): Promise<DocsStatus> {
 	const chunks: DocChunk[] = [];
 	for (const sourcePath of sourcePaths) {
 		const fullPath = join(syncMetadata.corpusPath, sourcePath);
-		const content = await Bun.file(fullPath).text();
+		const content = await readFile(fullPath, 'utf8');
 		chunks.push(...chunkDocument(content, sourcePath));
 	}
 
@@ -35,14 +35,39 @@ export async function refreshDocs(): Promise<DocsStatus> {
 
 async function collectMarkdownSourcePaths(corpusPath: string): Promise<string[]> {
 	const sourcePaths = new Set<string>();
-	for (const pattern of ['**/*.md', '**/*.mdx']) {
-		const glob = new Glob(pattern);
-		for await (const path of glob.scan({
-			cwd: corpusPath,
-			onlyFiles: true,
-		})) {
-			sourcePaths.add(path.replaceAll('\\', '/'));
+
+	async function walk(relativeDirectoryPath: string): Promise<void> {
+		const directoryPath =
+			relativeDirectoryPath.length === 0
+				? corpusPath
+				: join(corpusPath, relativeDirectoryPath);
+
+		const entries = await readdir(directoryPath, { withFileTypes: true });
+		for (const entry of entries) {
+			// Match prior Glob defaults by excluding hidden files/directories.
+			if (entry.name.startsWith('.')) {
+				continue;
+			}
+
+			const relativePath =
+				relativeDirectoryPath.length === 0
+					? entry.name
+					: join(relativeDirectoryPath, entry.name);
+
+			if (entry.isDirectory()) {
+				await walk(relativePath);
+				continue;
+			}
+
+			if (
+				entry.isFile() &&
+				(relativePath.endsWith('.md') || relativePath.endsWith('.mdx'))
+			) {
+				sourcePaths.add(relativePath.replaceAll('\\', '/'));
+			}
 		}
 	}
+
+	await walk('');
 	return [...sourcePaths];
 }

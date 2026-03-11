@@ -1,9 +1,20 @@
 {
   "name": "temporal-mcp",
-  "module": "src/index.ts",
+  "module": "./dist/cli.js",
+  "main": "./dist/cli.js",
+  "bin": {
+    "temporal-mcp": "./dist/cli.js"
+  },
   "type": "module",
   "workspaces": ["packages/*"],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "clean": "bun run scripts/clean.ts",
+    "build:javascript": "bun run scripts/build-javascript.ts",
+    "build:types": "bunx tsc -p packages/docs/tsconfig.types.json && bunx tsc -p packages/temporal/tsconfig.types.json && bunx tsc -p packages/server/tsconfig.types.json",
+    "build": "bun run clean && bun run build:javascript && bun run build:types",
     "check": "bun run typecheck && bun run test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "bun test",

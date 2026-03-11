@@ -16,7 +16,7 @@ The server exposes 28 tools across six categories—workflows, schedules, infras
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) runtime
+- [Node.js](https://nodejs.org) 20+ runtime
 - A running Temporal cluster (self-hosted) or a Temporal Cloud account
 - An MCP-compatible client (Claude Desktop, Claude Code, or any client that speaks stdio transport)
 
@@ -24,10 +24,13 @@ The server exposes 28 tools across six categories—workflows, schedules, infras
 
 ```bash
 bun install
-bun run src/index.ts
+bun run build
+node dist/cli.js
 ```
 
 The server communicates over stdio transport by default. Your MCP client launches it as a subprocess—you don't run it in a separate terminal.
+
+Bun is required for development and build workflows. Runtime execution uses Node.js (`dist/cli.js` or the `temporal-mcp` CLI).
 
 ## Configuration
 
@@ -108,8 +111,8 @@ Add this to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "temporal": {
-      "command": "bun",
-      "args": ["run", "/absolute/path/to/temporal-mcp/src/index.ts"]
+      "command": "node",
+      "args": ["/absolute/path/to/temporal-mcp/dist/cli.js"]
     }
   }
 }
@@ -118,12 +121,12 @@ Add this to your `claude_desktop_config.json`:
 ### Claude Code
 
 ```bash
-claude mcp add temporal -- bun run /absolute/path/to/temporal-mcp/src/index.ts
+claude mcp add temporal -- node /absolute/path/to/temporal-mcp/dist/cli.js
 ```
 
 ### Other clients
 
-Any MCP client that supports stdio transport can launch the server. Point it at `bun run src/index.ts` and the server handles the rest.
+Any MCP client that supports stdio transport can launch the server. Point it at `node dist/cli.js` (or `temporal-mcp`) and the server handles the rest.
 
 ## Tools
 

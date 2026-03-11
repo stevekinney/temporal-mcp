@@ -1,6 +1,8 @@
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, access, readFile, writeFile } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 
 const TEMPORAL_DOCS_REPO = 'https://github.com/temporalio/documentation.git';
 
@@ -37,9 +39,31 @@ function formatStderr(stderr: Uint8Array): string {
 	return text.length > 0 ? text : 'No stderr output available.';
 }
 
+function runGitCommand(args: string[]): {
+	exitCode: number;
+	stderr: Uint8Array;
+	stdout: Uint8Array;
+} {
+	const result = spawnSync('git', args, { encoding: 'buffer' });
+	return {
+		exitCode: result.status ?? 1,
+		stderr: result.stderr ?? new Uint8Array(),
+		stdout: result.stdout ?? new Uint8Array(),
+	};
+}
+
+async function fileExists(path: string): Promise<boolean> {
+	try {
+		await access(path, constants.F_OK);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 export async function syncDocs(): Promise<SyncMetadata> {
 	// Check if git is available
-	const gitCheck = Bun.spawnSync(['git', '--version']);
+	const gitCheck = runGitCommand(['--version']);
 	if (gitCheck.exitCode !== 0) {
 		throw {
 			ok: false,
@@ -56,22 +80,21 @@ export async function syncDocs(): Promise<SyncMetadata> {
 	await mkdir(join(homeDirectory, '.temporal-mcp'), { recursive: true });
 
 	// Check if already cloned
-	const exists = await Bun.file(join(corpusPath, '.git', 'HEAD')).exists();
+	const exists = await fileExists(join(corpusPath, '.git', 'HEAD'));
 
 	if (exists) {
 		// Pull latest
-		const pull = Bun.spawnSync(['git', '-C', corpusPath, 'pull', '--ff-only']);
+		const pull = runGitCommand(['-C', corpusPath, 'pull', '--ff-only']);
 		if (pull.exitCode !== 0) {
 			// Try reset and pull
-			const fetch = Bun.spawnSync(['git', '-C', corpusPath, 'fetch', 'origin']);
+			const fetch = runGitCommand(['-C', corpusPath, 'fetch', 'origin']);
 			if (fetch.exitCode !== 0) {
 				throw createSyncError(
 					`Failed to fetch docs repository after pull failed: ${formatStderr(fetch.stderr)}`,
 					true,
 				);
 			}
-			const reset = Bun.spawnSync([
-				'git',
+			const reset = runGitCommand([
 				'-C',
 				corpusPath,
 				'reset',
@@ -87,8 +110,7 @@ export async function syncDocs(): Promise<SyncMetadata> {
 		}
 	} else {
 		// Shallow clone for speed
-		const clone = Bun.spawnSync([
-			'git',
+		const clone = runGitCommand([
 			'clone',
 			'--depth',
 			'1',
@@ -104,13 +126,7 @@ export async function syncDocs(): Promise<SyncMetadata> {
 	}
 
 	// Get current commit SHA
-	const shaResult = Bun.spawnSync([
-		'git',
-		'-C',
-		corpusPath,
-		'rev-parse',
-		'HEAD',
-	]);
+	const shaResult = runGitCommand(['-C', corpusPath, 'rev-parse', 'HEAD']);
 	if (shaResult.exitCode !== 0) {
 		throw createSyncError(
 			`Failed to read docs repository commit SHA: ${formatStderr(shaResult.stderr)}`,
@@ -126,9 +142,10 @@ export async function syncDocs(): Promise<SyncMetadata> {
 	};
 
 	// Persist sync metadata
-	await Bun.write(
+	await writeFile(
 		getSyncMetaPath(homeDirectory),
 		JSON.stringify(metadata, null, 2),
+		'utf8',
 	);
 
 	return metadata;
@@ -138,9 +155,8 @@ export async function getSyncMetadata(
 	homeDirectory: string = homedir(),
 ): Promise<SyncMetadata | null> {
 	try {
-		const file = Bun.file(getSyncMetaPath(homeDirectory));
-		if (!(await file.exists())) return null;
-		return await file.json();
+		const content = await readFile(getSyncMetaPath(homeDirectory), 'utf8');
+		return JSON.parse(content) as SyncMetadata;
 	} catch {
 		return null;
 	}

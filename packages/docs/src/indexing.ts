@@ -2,7 +2,7 @@ import MiniSearch from 'minisearch';
 import type { DocChunk } from './chunking.ts';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 export interface SearchResult {
 	title: string;
@@ -78,14 +78,12 @@ export function searchIndex(
 export async function persistIndex(index: MiniSearch): Promise<void> {
 	const cacheDir = getCacheDir();
 	await mkdir(cacheDir, { recursive: true });
-	await Bun.write(getIndexPath(), JSON.stringify(index.toJSON()));
+	await writeFile(getIndexPath(), JSON.stringify(index.toJSON()), 'utf8');
 }
 
 export async function loadPersistedIndex(): Promise<MiniSearch | null> {
 	try {
-		const file = Bun.file(getIndexPath());
-		if (!(await file.exists())) return null;
-		const serializedIndex = await file.text();
+		const serializedIndex = await readFile(getIndexPath(), 'utf8');
 		return MiniSearch.loadJSON(
 			serializedIndex,
 			createMiniSearchOptions(),

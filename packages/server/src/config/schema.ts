@@ -5,8 +5,8 @@ import type {
   SecurityConfig,
   StdioTransportConfig,
   TemporalConfig,
-} from '../contracts/config';
-import type { PolicyConfig } from '../contracts/policy';
+} from '../contracts/config.ts';
+import type { PolicyConfig } from '../contracts/policy.ts';
 
 export const DEFAULT_MCP_CAPABILITIES: McpCapabilitiesConfig = {
   tasks: true,

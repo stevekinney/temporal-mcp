@@ -2,7 +2,22 @@
   "name": "@temporal-mcp/server",
   "version": "0.1.0",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/types/server/src/index.d.ts",
+  "files": ["dist"],
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/types/server/src/index.d.ts"
+    }
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@temporalio/client": "^1.15.0",
+    "minisearch": "^7.2.0",
+    "zod": "^4.0.0"
   }
 }
