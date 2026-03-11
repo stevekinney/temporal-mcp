@@ -1,7 +1,7 @@
 import { getSyncMetadata } from '../sync.ts';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 export interface DocsStatus {
 	synced: boolean;
@@ -24,9 +24,8 @@ async function loadDocsStatusMetadata(
 	homeDirectory: string = homedir(),
 ): Promise<DocsStatusMetadata | null> {
 	try {
-		const file = Bun.file(getStatusMetadataPath(homeDirectory));
-		if (!(await file.exists())) return null;
-		return (await file.json()) as DocsStatusMetadata;
+		const content = await readFile(getStatusMetadataPath(homeDirectory), 'utf8');
+		return JSON.parse(content) as DocsStatusMetadata;
 	} catch {
 		return null;
 	}
@@ -41,9 +40,10 @@ export async function persistDocsStatusMetadata(
 	await mkdir(join(homeDirectory, '.temporal-mcp', 'cache'), {
 		recursive: true,
 	});
-	await Bun.write(
+	await writeFile(
 		getStatusMetadataPath(homeDirectory),
 		JSON.stringify(metadata, null, 2),
+		'utf8',
 	);
 }
 

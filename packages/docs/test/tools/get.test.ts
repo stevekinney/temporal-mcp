@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, mkdtemp, rm, symlink } from 'node:fs/promises';
+import {
+	access,
+	mkdir,
+	mkdtemp,
+	readFile,
+	rm,
+	symlink,
+	writeFile,
+} from 'node:fs/promises';
+import { constants } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { getDoc, validateDocPath } from '../../src/tools/get.ts';
@@ -36,8 +45,13 @@ describe('getDoc', () => {
 		try {
 			// validateDocPath returns a full path; we can check the file doesn't exist
 			const fullPath = validateDocPath(tempDir, 'nonexistent.md');
-			const file = Bun.file(fullPath);
-			expect(await file.exists()).toBe(false);
+			let exists = true;
+			try {
+				await access(fullPath, constants.F_OK);
+			} catch {
+				exists = false;
+			}
+			expect(exists).toBe(false);
 		} finally {
 			await rm(tempDir, { recursive: true });
 		}
@@ -47,12 +61,11 @@ describe('getDoc', () => {
 		const tempDir = await mkdtemp(join(tmpdir(), 'get-read-'));
 		try {
 			const content = '# Test Document\n\nSome content here.';
-			await Bun.write(join(tempDir, 'test.md'), content);
+			await writeFile(join(tempDir, 'test.md'), content, 'utf8');
 
 			const fullPath = validateDocPath(tempDir, 'test.md');
-			const file = Bun.file(fullPath);
-			expect(await file.exists()).toBe(true);
-			expect(await file.text()).toBe(content);
+			await access(fullPath, constants.F_OK);
+			expect(await readFile(fullPath, 'utf8')).toBe(content);
 		} finally {
 			await rm(tempDir, { recursive: true });
 		}
@@ -69,7 +82,7 @@ describe('getDoc', () => {
 			await mkdir(docsPath, { recursive: true });
 
 			const outsideFile = join(outsideDirectory, 'secret.md');
-			await Bun.write(outsideFile, 'outside');
+			await writeFile(outsideFile, 'outside', 'utf8');
 
 			const linkPath = join(docsPath, 'link.md');
 			await symlink(outsideFile, linkPath);

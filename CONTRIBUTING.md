@@ -35,3 +35,13 @@ bun run check
 ```
 
 CI also runs a separate coverage job (`bun run test:coverage`) for visibility.
+
+## Build Artifacts
+
+Build distributable JavaScript and declaration files with:
+
+```bash
+bun run build
+```
+
+The build uses Bun for compilation and TypeScript declaration emit, and produces Node.js runtime artifacts under `dist/` directories.

@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { Glob } from 'bun';
+import { readFile, readdir } from 'node:fs/promises';
 
 export type SdkSlug =
 	| 'typescript'
@@ -13,6 +13,50 @@ export type SdkSlug =
 export interface DetectionResult {
 	detectedSdks: SdkSlug[];
 	source: 'explicit' | 'scan' | 'fallback';
+}
+
+interface PackageManifest {
+	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
+}
+
+async function readTextIfExists(path: string): Promise<string | null> {
+	try {
+		return await readFile(path, 'utf8');
+	} catch {
+		return null;
+	}
+}
+
+async function hasTemporalDotnetProject(root: string): Promise<boolean> {
+	const pendingDirectories = [root];
+
+	while (pendingDirectories.length > 0) {
+		const directoryPath = pendingDirectories.pop()!;
+		let entries;
+		try {
+			entries = await readdir(directoryPath, { withFileTypes: true });
+		} catch {
+			continue;
+		}
+
+		for (const entry of entries) {
+			const fullPath = join(directoryPath, entry.name);
+			if (entry.isDirectory()) {
+				pendingDirectories.push(fullPath);
+				continue;
+			}
+
+			if (!entry.isFile() || !entry.name.endsWith('.csproj')) continue;
+
+			const content = await readTextIfExists(fullPath);
+			if (content?.includes('Temporalio')) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 export async function detectSdks(options?: {
@@ -31,50 +75,55 @@ export async function detectSdks(options?: {
 	for (const root of roots) {
 		// TypeScript/Node: check package.json for @temporalio/*
 		try {
-			const pkg = await Bun.file(join(root, 'package.json')).json();
-			const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
-			if (Object.keys(allDeps).some((d) => d.startsWith('@temporalio/'))) {
+			const packageJson = await readFile(join(root, 'package.json'), 'utf8');
+			const packageManifest = JSON.parse(packageJson) as PackageManifest;
+			const allDependencies = {
+				...packageManifest.dependencies,
+				...packageManifest.devDependencies,
+			};
+			if (
+				Object.keys(allDependencies).some((dependencyName) =>
+					dependencyName.startsWith('@temporalio/'),
+				)
+			) {
 				detected.add('typescript');
 			}
 		} catch {}
 
 		// Python: check requirements.txt or pyproject.toml for temporalio
-		try {
-			const req = await Bun.file(join(root, 'requirements.txt')).text();
-			if (req.includes('temporalio')) detected.add('python');
-		} catch {}
-		try {
-			const pyproject = await Bun.file(join(root, 'pyproject.toml')).text();
-			if (pyproject.includes('temporalio')) detected.add('python');
-		} catch {}
+		const requirementsText = await readTextIfExists(
+			join(root, 'requirements.txt'),
+		);
+		if (requirementsText?.includes('temporalio')) {
+			detected.add('python');
+		}
+
+		const pyprojectContent = await readTextIfExists(join(root, 'pyproject.toml'));
+		if (pyprojectContent?.includes('temporalio')) {
+			detected.add('python');
+		}
 
 		// Go: check go.mod for go.temporal.io
-		try {
-			const gomod = await Bun.file(join(root, 'go.mod')).text();
-			if (gomod.includes('go.temporal.io')) detected.add('go');
-		} catch {}
+		const goModuleContent = await readTextIfExists(join(root, 'go.mod'));
+		if (goModuleContent?.includes('go.temporal.io')) {
+			detected.add('go');
+		}
 
 		// Java: check build.gradle or pom.xml for io.temporal
-		try {
-			const gradle = await Bun.file(join(root, 'build.gradle')).text();
-			if (gradle.includes('io.temporal')) detected.add('java');
-		} catch {}
-		try {
-			const pom = await Bun.file(join(root, 'pom.xml')).text();
-			if (pom.includes('io.temporal')) detected.add('java');
-		} catch {}
+		const gradleContent = await readTextIfExists(join(root, 'build.gradle'));
+		if (gradleContent?.includes('io.temporal')) {
+			detected.add('java');
+		}
 
-		// .NET: check *.csproj for Temporalio using Bun's Glob
-		try {
-			const glob = new Glob('**/*.csproj');
-			for await (const path of glob.scan({ cwd: root, absolute: true })) {
-				const content = await Bun.file(path).text();
-				if (content.includes('Temporalio')) {
-					detected.add('dotnet');
-					break;
-				}
-			}
-		} catch {}
+		const pomContent = await readTextIfExists(join(root, 'pom.xml'));
+		if (pomContent?.includes('io.temporal')) {
+			detected.add('java');
+		}
+
+		// .NET: check *.csproj files for Temporalio
+		if (await hasTemporalDotnetProject(root)) {
+			detected.add('dotnet');
+		}
 	}
 
 	if (detected.size > 0) {

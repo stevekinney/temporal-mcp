@@ -1,5 +1,6 @@
 import { isAbsolute, join, resolve, relative } from 'node:path';
-import { realpath } from 'node:fs/promises';
+import { access, readFile, realpath } from 'node:fs/promises';
+import { constants } from 'node:fs';
 import { getCorpusPath } from '../sync.ts';
 
 export interface DocGetInput {
@@ -26,8 +27,9 @@ export async function getDoc(input: DocGetInput): Promise<string> {
 	const corpusPath = input.corpusPath ?? getCorpusPath();
 	const fullPath = validateDocPath(corpusPath, input.sourcePath);
 
-	const file = Bun.file(fullPath);
-	if (!(await file.exists())) {
+	try {
+		await access(fullPath, constants.F_OK);
+	} catch {
 		throw {
 			ok: false,
 			error: {
@@ -39,7 +41,7 @@ export async function getDoc(input: DocGetInput): Promise<string> {
 	}
 
 	await assertRealPathWithinCorpus(corpusPath, fullPath, input.sourcePath);
-	return await file.text();
+	return await readFile(fullPath, 'utf8');
 }
 
 function throwPathTraversalError(sourcePath: string): never {
