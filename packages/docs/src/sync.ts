@@ -117,7 +117,7 @@ export async function syncDocs(): Promise<SyncMetadata> {
 			true,
 		);
 	}
-	const commitSha = shaResult.stdout.toString().trim();
+	const commitSha = new TextDecoder().decode(shaResult.stdout).trim();
 
 	const metadata: SyncMetadata = {
 		lastSyncTime: new Date().toISOString(),

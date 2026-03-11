@@ -3,9 +3,9 @@ import type { ToolRegistrationContext } from './register-all.ts';
 import { errorResponse, successResponse } from './response-helpers.ts';
 import { buildRequestContext } from '../safety/request-context.ts';
 import { evaluatePolicy } from '../policy/evaluate.ts';
-import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
+import { requireToolContract } from './tool-contract.ts';
 import { inputSchema } from './zod-compat.ts';
 
 type WorkflowPolicyGateResult =
@@ -26,23 +26,8 @@ function policyGate(
 	profile: string | undefined,
 	namespace?: string,
 ): WorkflowPolicyGateResult {
-	const contract = getToolContract(toolName);
-	if (!contract) {
-		return {
-			policyScope: null,
-			decision: null,
-			blocked: errorResponse({
-				ok: false,
-				error: {
-					code: 'TOOL_NOT_FOUND',
-					message: `Tool "${toolName}" is not registered in the capability matrix`,
-					retryable: false,
-				},
-			}),
-		};
-	}
-
 	const policyScope = resolveTemporalPolicyScope(context, profile, namespace);
+	const contract = requireToolContract(toolName);
 	const decision = evaluatePolicy(context.config.policy, contract, policyScope);
 	if (!decision.allowed) {
 		return {
