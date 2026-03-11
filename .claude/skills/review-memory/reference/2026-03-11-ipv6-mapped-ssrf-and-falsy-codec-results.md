@@ -1,3 +1,0 @@
-- SSRF guards for codec endpoints must normalize IPv6 hostnames and treat IPv6-mapped IPv4 addresses (for example `::ffff:127.0.0.1`) as the underlying IPv4 for private-range checks.
-- Codec decode paths must treat any defined payload (including falsy values like `0` or `false`) as a valid decoded result; only `undefined` indicates an empty codec response.
-- Early error returns in tool handlers should emit `tool_result` audit logs so failed execution paths remain observable in audit telemetry.

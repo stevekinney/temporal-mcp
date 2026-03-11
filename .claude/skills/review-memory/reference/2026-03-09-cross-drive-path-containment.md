@@ -1,2 +1,0 @@
-- Path-containment checks based on `path.relative` must treat absolute outputs (including Windows drive-letter forms) as outside the root boundary.
-- Keep containment logic separator-agnostic by normalizing path separators before prefix checks.

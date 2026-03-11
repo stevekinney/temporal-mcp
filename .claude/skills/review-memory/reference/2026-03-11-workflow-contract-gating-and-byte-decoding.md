@@ -1,2 +1,0 @@
-- Workflow policy gates must use the shared `requireToolContract` fail-closed helper so contract misses are handled consistently across all tool families.
-- When reading process output from Bun spawn APIs, decode `Uint8Array` with `TextDecoder` before parsing text-derived metadata such as commit SHAs.

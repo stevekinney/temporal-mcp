@@ -1,1 +1,0 @@
-- Workflow tool handlers must guarantee `tool_call` → `tool_result` audit ordering even on early failures from policy-scope resolution; add a `hasLoggedToolCall` guard and fallback log in each catch path.

@@ -1,4 +1,0 @@
-- Evaluate Temporal tool policy using resolved profile and namespace values, not raw optional inputs, so allowlists cannot be bypassed by omitting arguments.
-- Any recovery path after a failed repository sync step must validate subprocess exit codes and surface structured failures.
-- If a refresh flow claims to enable search, it must rebuild and persist the index in the same operation, not just update source content.
-- Keep audit-log argument redaction and response redaction pattern sets aligned to avoid secret leakage across safety surfaces.

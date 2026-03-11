@@ -1,2 +1,0 @@
-- Reuse the shared `requireToolContract` helper in policy/resource enforcement paths to keep fail-closed `TOOL_NOT_FOUND` semantics consistent across the codebase.
-- For break-glass environment gates, check variable presence (`=== undefined`) rather than truthiness so empty-string values still count as explicitly set.

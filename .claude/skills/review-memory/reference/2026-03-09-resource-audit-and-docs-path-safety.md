@@ -1,3 +1,0 @@
-- Resource resolvers must enforce the same policy gate as equivalent tools and log call, policy decision, and result events with a request context.
-- Treat policy allowlist misses as a distinct decision code from deny-pattern matches so audit logs and clients can react precisely.
-- Documentation path validation must include realpath boundary checks to block symlink escapes outside the corpus root.

@@ -1,2 +1,0 @@
-- Each tool handler should emit exactly one `tool_call` before any `tool_result`; if early policy-scope resolution can throw, add a catch-path fallback call log before logging the result.
-- Build `requestContext` once per handler and mutate `requestContext.profile` after scope resolution to preserve a stable request ID across success and failure paths.
