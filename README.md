@@ -1,4 +1,4 @@
-# temporal-mcp
+# Temporal MCP
 
 An MCP server that gives AI agents read-only access to your Temporal infrastructure.
 
