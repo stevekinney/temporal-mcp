@@ -29,36 +29,32 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, pageSize }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.schedule.list',
 				{ profile, pageSize },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.schedule.list',
-					{ profile: policyScope.profile, pageSize },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					pageSize,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.schedule.list');
-				{
-					const decision = evaluatePolicy(config.policy, contract, policyScope);
-					auditLogger.logPolicyDecision(requestContext, decision);
-					if (!decision.allowed) {
-						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-						return errorResponse({
-							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
-					}
+				const decision = evaluatePolicy(config.policy, contract, policyScope);
+				auditLogger.logPolicyDecision(requestContext, decision);
+				if (!decision.allowed) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse({
+						ok: false,
+						error: { code: decision.code, message: decision.reason, retryable: false },
+					});
 				}
 
 				const { listSchedules } = await import(
@@ -70,6 +66,9 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, { profile, pageSize });
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -89,36 +88,32 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, scheduleId }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.schedule.describe',
 				{ profile, scheduleId },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.schedule.describe',
-					{ profile: policyScope.profile, scheduleId },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					scheduleId,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.schedule.describe');
-				{
-					const decision = evaluatePolicy(config.policy, contract, policyScope);
-					auditLogger.logPolicyDecision(requestContext, decision);
-					if (!decision.allowed) {
-						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-						return errorResponse({
-							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
-					}
+				const decision = evaluatePolicy(config.policy, contract, policyScope);
+				auditLogger.logPolicyDecision(requestContext, decision);
+				if (!decision.allowed) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse({
+						ok: false,
+						error: { code: decision.code, message: decision.reason, retryable: false },
+					});
 				}
 
 				const { describeSchedule } = await import(
@@ -130,6 +125,9 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, { profile, scheduleId });
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -160,7 +158,7 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 			{ profile, scheduleId, startTime: rangeStart, endTime: rangeEnd }: any,
 			extra: any,
 		) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.schedule.matching-times',
 				{
 					profile,
@@ -171,37 +169,28 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.schedule.matching-times',
-					{
-						profile: policyScope.profile,
-						scheduleId,
-						startTime: rangeStart,
-						endTime: rangeEnd,
-					},
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					scheduleId,
 					startTime: rangeStart,
 					endTime: rangeEnd,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.schedule.matching-times');
-				{
-					const decision = evaluatePolicy(config.policy, contract, policyScope);
-					auditLogger.logPolicyDecision(requestContext, decision);
-					if (!decision.allowed) {
-						auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-						return errorResponse({
-							ok: false,
-							error: { code: decision.code, message: decision.reason, retryable: false },
-						});
-					}
+				const decision = evaluatePolicy(config.policy, contract, policyScope);
+				auditLogger.logPolicyDecision(requestContext, decision);
+				if (!decision.allowed) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse({
+						ok: false,
+						error: { code: decision.code, message: decision.reason, retryable: false },
+					});
 				}
 
 				const { listScheduleMatchingTimes } = await import(
@@ -218,6 +207,14 @@ export function registerScheduleTools(context: ToolRegistrationContext): void {
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, {
+						profile,
+						scheduleId,
+						startTime: rangeStart,
+						endTime: rangeEnd,
+					});
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}

@@ -29,24 +29,22 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, taskQueue }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.task-queue.describe',
 				{ profile, taskQueue },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.task-queue.describe',
-					{ profile: policyScope.profile, taskQueue },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					taskQueue,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.task-queue.describe');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -71,6 +69,12 @@ export function registerInfrastructureTools(
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, {
+						profile,
+						taskQueue,
+					});
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -93,24 +97,22 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, taskQueue }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.task-queue.configuration',
 				{ profile, taskQueue },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.task-queue.configuration',
-					{ profile: policyScope.profile, taskQueue },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					taskQueue,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.task-queue.configuration');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -135,6 +137,12 @@ export function registerInfrastructureTools(
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, {
+						profile,
+						taskQueue,
+					});
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -159,24 +167,22 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, pageSize }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.namespace.list',
 				{ profile, pageSize },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.namespace.list',
-					{ profile: policyScope.profile, pageSize },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					pageSize,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.namespace.list');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -198,6 +204,12 @@ export function registerInfrastructureTools(
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, {
+						profile,
+						pageSize,
+					});
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -217,12 +229,13 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, namespace }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.namespace.describe',
 				{ profile, namespace },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(
@@ -230,15 +243,12 @@ export function registerInfrastructureTools(
 					profile,
 					namespace,
 				);
-				requestContext = buildRequestContext(
-					'temporal.namespace.describe',
-					{ profile: policyScope.profile, namespace },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					namespace,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.namespace.describe');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -260,6 +270,12 @@ export function registerInfrastructureTools(
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, {
+						profile,
+						namespace,
+					});
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -284,12 +300,13 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile, namespace }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.search-attributes.list',
 				{ profile, namespace },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(
@@ -297,15 +314,12 @@ export function registerInfrastructureTools(
 					profile,
 					namespace,
 				);
-				requestContext = buildRequestContext(
-					'temporal.search-attributes.list',
-					{ profile: policyScope.profile, namespace: policyScope.namespace },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					namespace: policyScope.namespace,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.search-attributes.list');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -329,6 +343,12 @@ export function registerInfrastructureTools(
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, {
+						profile,
+						namespace,
+					});
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -348,21 +368,19 @@ export function registerInfrastructureTools(
 			}),
 		},
 		async ({ profile }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.cluster.info',
 				{ profile },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.cluster.info',
-					{ profile: policyScope.profile },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, { profile: policyScope.profile });
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.cluster.info');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -384,6 +402,9 @@ export function registerInfrastructureTools(
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, { profile });
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}

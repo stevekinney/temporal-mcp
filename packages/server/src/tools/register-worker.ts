@@ -27,24 +27,22 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, taskQueue }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.worker.versioning-rules',
 				{ profile, taskQueue },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.worker.versioning-rules',
-					{ profile: policyScope.profile, taskQueue },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					taskQueue,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.worker.versioning-rules');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -69,6 +67,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, { profile, taskQueue });
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -95,25 +96,23 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, taskQueue, buildIds }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.worker.task-reachability',
 				{ profile, taskQueue, buildIds },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.worker.task-reachability',
-					{ profile: policyScope.profile, taskQueue, buildIds },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					taskQueue,
 					buildIds,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.worker.task-reachability');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -139,6 +138,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, { profile, taskQueue, buildIds });
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -163,24 +165,22 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, pageSize }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.worker.deployment.list',
 				{ profile, pageSize },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.worker.deployment.list',
-					{ profile: policyScope.profile, pageSize },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					pageSize,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.worker.deployment.list');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -205,6 +205,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, { profile, pageSize });
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -226,24 +229,22 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, deploymentName }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.worker.deployment.describe',
 				{ profile, deploymentName },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.worker.deployment.describe',
-					{ profile: policyScope.profile, deploymentName },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					deploymentName,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract('temporal.worker.deployment.describe');
 				const decision = evaluatePolicy(config.policy, contract, policyScope);
@@ -268,6 +269,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, { profile, deploymentName });
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -290,25 +294,23 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, deploymentName, buildId }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.worker.deployment.version.describe',
 				{ profile, deploymentName, buildId },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.worker.deployment.version.describe',
-					{ profile: policyScope.profile, deploymentName, buildId },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					deploymentName,
 					buildId,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract(
 					'temporal.worker.deployment.version.describe',
@@ -336,6 +338,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, { profile, deploymentName, buildId });
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
@@ -358,24 +363,22 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, deploymentName }: any, extra: any) => {
-			let requestContext = buildRequestContext(
+			const requestContext = buildRequestContext(
 				'temporal.worker.deployment.reachability',
 				{ profile, deploymentName },
 				extra,
 			);
 			const startTime = Date.now();
+			let hasLoggedToolCall = false;
 
 			try {
 				const policyScope = resolveTemporalPolicyScope(context, profile);
-				requestContext = buildRequestContext(
-					'temporal.worker.deployment.reachability',
-					{ profile: policyScope.profile, deploymentName },
-					extra,
-				);
+				requestContext.profile = policyScope.profile;
 				auditLogger.logToolCall(requestContext, {
 					profile: policyScope.profile,
 					deploymentName,
 				});
+				hasLoggedToolCall = true;
 
 				const contract = requireToolContract(
 					'temporal.worker.deployment.reachability',
@@ -402,6 +405,9 @@ export function registerWorkerTools(context: ToolRegistrationContext): void {
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 			} catch (error) {
+				if (!hasLoggedToolCall) {
+					auditLogger.logToolCall(requestContext, { profile, deploymentName });
+				}
 				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 				return errorResponse(error);
 			}
