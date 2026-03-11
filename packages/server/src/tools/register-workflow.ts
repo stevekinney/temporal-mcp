@@ -79,23 +79,25 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, query, pageSize }: any, extra: any) => {
-			const requestContext = buildRequestContext(
-				'temporal.workflow.list',
-				{ profile, query, pageSize },
-				extra,
-			);
-			const startTime = Date.now();
+				const requestContext = buildRequestContext(
+					'temporal.workflow.list',
+					{ profile, query, pageSize },
+					extra,
+				);
+				const startTime = Date.now();
+				let hasLoggedToolCall = false;
 
 			try {
 				const gate = policyGate(context, 'temporal.workflow.list', profile);
 				if (gate.policyScope) {
 					requestContext.profile = gate.policyScope.profile;
 				}
-				auditLogger.logToolCall(requestContext, {
-					profile: gate.policyScope?.profile ?? profile,
-					query,
-					pageSize,
-				});
+					auditLogger.logToolCall(requestContext, {
+						profile: gate.policyScope?.profile ?? profile,
+						query,
+						pageSize,
+					});
+					hasLoggedToolCall = true;
 				if (gate.decision) {
 					auditLogger.logPolicyDecision(requestContext, gate.decision);
 				}
@@ -112,10 +114,13 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				const result = successResponse(redactSensitiveFields(workflows));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
-			} catch (error) {
-				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-				return errorResponse(error);
-			}
+				} catch (error) {
+					if (!hasLoggedToolCall) {
+						auditLogger.logToolCall(requestContext, { profile, query, pageSize });
+					}
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse(error);
+				}
 		},
 	);
 
@@ -137,23 +142,25 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, workflowId, runId }: any, extra: any) => {
-			const requestContext = buildRequestContext(
-				'temporal.workflow.describe',
-				{ profile, workflowId, runId },
-				extra,
-			);
-			const startTime = Date.now();
+				const requestContext = buildRequestContext(
+					'temporal.workflow.describe',
+					{ profile, workflowId, runId },
+					extra,
+				);
+				const startTime = Date.now();
+				let hasLoggedToolCall = false;
 
 			try {
 				const gate = policyGate(context, 'temporal.workflow.describe', profile);
 				if (gate.policyScope) {
 					requestContext.profile = gate.policyScope.profile;
 				}
-				auditLogger.logToolCall(requestContext, {
-					profile: gate.policyScope?.profile ?? profile,
-					workflowId,
-					runId,
-				});
+					auditLogger.logToolCall(requestContext, {
+						profile: gate.policyScope?.profile ?? profile,
+						workflowId,
+						runId,
+					});
+					hasLoggedToolCall = true;
 				if (gate.decision) {
 					auditLogger.logPolicyDecision(requestContext, gate.decision);
 				}
@@ -170,10 +177,13 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				const result = successResponse(redactSensitiveFields(description));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
-			} catch (error) {
-				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-				return errorResponse(error);
-			}
+				} catch (error) {
+					if (!hasLoggedToolCall) {
+						auditLogger.logToolCall(requestContext, { profile, workflowId, runId });
+					}
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse(error);
+				}
 		},
 	);
 
@@ -193,22 +203,24 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, query }: any, extra: any) => {
-			const requestContext = buildRequestContext(
-				'temporal.workflow.count',
-				{ profile, query },
-				extra,
-			);
-			const startTime = Date.now();
+				const requestContext = buildRequestContext(
+					'temporal.workflow.count',
+					{ profile, query },
+					extra,
+				);
+				const startTime = Date.now();
+				let hasLoggedToolCall = false;
 
 			try {
 				const gate = policyGate(context, 'temporal.workflow.count', profile);
 				if (gate.policyScope) {
 					requestContext.profile = gate.policyScope.profile;
 				}
-				auditLogger.logToolCall(requestContext, {
-					profile: gate.policyScope?.profile ?? profile,
-					query,
-				});
+					auditLogger.logToolCall(requestContext, {
+						profile: gate.policyScope?.profile ?? profile,
+						query,
+					});
+					hasLoggedToolCall = true;
 				if (gate.decision) {
 					auditLogger.logPolicyDecision(requestContext, gate.decision);
 				}
@@ -225,10 +237,13 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				const result = successResponse(redactSensitiveFields(countResult));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
-			} catch (error) {
-				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-				return errorResponse(error);
-			}
+				} catch (error) {
+					if (!hasLoggedToolCall) {
+						auditLogger.logToolCall(requestContext, { profile, query });
+					}
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse(error);
+				}
 		},
 	);
 
@@ -251,23 +266,25 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, workflowId, runId }: any, extra: any) => {
-			const requestContext = buildRequestContext(
-				'temporal.workflow.result',
-				{ profile, workflowId, runId },
-				extra,
-			);
-			const startTime = Date.now();
+				const requestContext = buildRequestContext(
+					'temporal.workflow.result',
+					{ profile, workflowId, runId },
+					extra,
+				);
+				const startTime = Date.now();
+				let hasLoggedToolCall = false;
 
 			try {
 				const gate = policyGate(context, 'temporal.workflow.result', profile);
 				if (gate.policyScope) {
 					requestContext.profile = gate.policyScope.profile;
 				}
-				auditLogger.logToolCall(requestContext, {
-					profile: gate.policyScope?.profile ?? profile,
-					workflowId,
-					runId,
-				});
+					auditLogger.logToolCall(requestContext, {
+						profile: gate.policyScope?.profile ?? profile,
+						workflowId,
+						runId,
+					});
+					hasLoggedToolCall = true;
 				if (gate.decision) {
 					auditLogger.logPolicyDecision(requestContext, gate.decision);
 				}
@@ -284,10 +301,13 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				const result = successResponse(redactSensitiveFields(workflowResult));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
-			} catch (error) {
-				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-				return errorResponse(error);
-			}
+				} catch (error) {
+					if (!hasLoggedToolCall) {
+						auditLogger.logToolCall(requestContext, { profile, workflowId, runId });
+					}
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse(error);
+				}
 		},
 	);
 
@@ -314,24 +334,26 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, workflowId, runId, queryType, queryArgs }: any, extra: any) => {
-			const requestContext = buildRequestContext(
-				'temporal.workflow.query',
-				{ profile, workflowId, runId, queryType },
-				extra,
-			);
-			const startTime = Date.now();
+				const requestContext = buildRequestContext(
+					'temporal.workflow.query',
+					{ profile, workflowId, runId, queryType },
+					extra,
+				);
+				const startTime = Date.now();
+				let hasLoggedToolCall = false;
 
 			try {
 				const gate = policyGate(context, 'temporal.workflow.query', profile);
 				if (gate.policyScope) {
 					requestContext.profile = gate.policyScope.profile;
 				}
-				auditLogger.logToolCall(requestContext, {
-					profile: gate.policyScope?.profile ?? profile,
-					workflowId,
-					runId,
-					queryType,
-				});
+					auditLogger.logToolCall(requestContext, {
+						profile: gate.policyScope?.profile ?? profile,
+						workflowId,
+						runId,
+						queryType,
+					});
+					hasLoggedToolCall = true;
 				if (gate.decision) {
 					auditLogger.logPolicyDecision(requestContext, gate.decision);
 				}
@@ -353,10 +375,18 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				const result = successResponse(redactSensitiveFields(queryResult));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
-			} catch (error) {
-				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-				return errorResponse(error);
-			}
+				} catch (error) {
+					if (!hasLoggedToolCall) {
+						auditLogger.logToolCall(requestContext, {
+							profile,
+							workflowId,
+							runId,
+							queryType,
+						});
+					}
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse(error);
+				}
 		},
 	);
 
@@ -380,23 +410,25 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, workflowId, runId }: any, extra: any) => {
-			const requestContext = buildRequestContext(
-				'temporal.workflow.history',
-				{ profile, workflowId, runId },
-				extra,
-			);
-			const startTime = Date.now();
+				const requestContext = buildRequestContext(
+					'temporal.workflow.history',
+					{ profile, workflowId, runId },
+					extra,
+				);
+				const startTime = Date.now();
+				let hasLoggedToolCall = false;
 
 			try {
 				const gate = policyGate(context, 'temporal.workflow.history', profile);
 				if (gate.policyScope) {
 					requestContext.profile = gate.policyScope.profile;
 				}
-				auditLogger.logToolCall(requestContext, {
-					profile: gate.policyScope?.profile ?? profile,
-					workflowId,
-					runId,
-				});
+					auditLogger.logToolCall(requestContext, {
+						profile: gate.policyScope?.profile ?? profile,
+						workflowId,
+						runId,
+					});
+					hasLoggedToolCall = true;
 				if (gate.decision) {
 					auditLogger.logPolicyDecision(requestContext, gate.decision);
 				}
@@ -413,10 +445,13 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				const result = successResponse(redactSensitiveFields(history));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
-			} catch (error) {
-				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-				return errorResponse(error);
-			}
+				} catch (error) {
+					if (!hasLoggedToolCall) {
+						auditLogger.logToolCall(requestContext, { profile, workflowId, runId });
+					}
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse(error);
+				}
 		},
 	);
 
@@ -443,24 +478,26 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, workflowId, runId, pageSize }: any, extra: any) => {
-			const requestContext = buildRequestContext(
-				'temporal.workflow.history.reverse',
-				{ profile, workflowId, runId, pageSize },
-				extra,
-			);
-			const startTime = Date.now();
+				const requestContext = buildRequestContext(
+					'temporal.workflow.history.reverse',
+					{ profile, workflowId, runId, pageSize },
+					extra,
+				);
+				const startTime = Date.now();
+				let hasLoggedToolCall = false;
 
 			try {
 				const gate = policyGate(context, 'temporal.workflow.history.reverse', profile);
 				if (gate.policyScope) {
 					requestContext.profile = gate.policyScope.profile;
 				}
-				auditLogger.logToolCall(requestContext, {
-					profile: gate.policyScope?.profile ?? profile,
-					workflowId,
-					runId,
-					pageSize,
-				});
+					auditLogger.logToolCall(requestContext, {
+						profile: gate.policyScope?.profile ?? profile,
+						workflowId,
+						runId,
+						pageSize,
+					});
+					hasLoggedToolCall = true;
 				if (gate.decision) {
 					auditLogger.logPolicyDecision(requestContext, gate.decision);
 				}
@@ -482,10 +519,18 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				const result = successResponse(redactSensitiveFields(history));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
-			} catch (error) {
-				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-				return errorResponse(error);
-			}
+				} catch (error) {
+					if (!hasLoggedToolCall) {
+						auditLogger.logToolCall(requestContext, {
+							profile,
+							workflowId,
+							runId,
+							pageSize,
+						});
+					}
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse(error);
+				}
 		},
 	);
 
@@ -509,23 +554,25 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 			}),
 		},
 		async ({ profile, workflowId, runId }: any, extra: any) => {
-			const requestContext = buildRequestContext(
-				'temporal.workflow.history.summarize',
-				{ profile, workflowId, runId },
-				extra,
-			);
-			const startTime = Date.now();
+				const requestContext = buildRequestContext(
+					'temporal.workflow.history.summarize',
+					{ profile, workflowId, runId },
+					extra,
+				);
+				const startTime = Date.now();
+				let hasLoggedToolCall = false;
 
 			try {
 				const gate = policyGate(context, 'temporal.workflow.history.summarize', profile);
 				if (gate.policyScope) {
 					requestContext.profile = gate.policyScope.profile;
 				}
-				auditLogger.logToolCall(requestContext, {
-					profile: gate.policyScope?.profile ?? profile,
-					workflowId,
-					runId,
-				});
+					auditLogger.logToolCall(requestContext, {
+						profile: gate.policyScope?.profile ?? profile,
+						workflowId,
+						runId,
+					});
+					hasLoggedToolCall = true;
 				if (gate.decision) {
 					auditLogger.logPolicyDecision(requestContext, gate.decision);
 				}
@@ -553,10 +600,13 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				const result = successResponse(redactSensitiveFields(summary));
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
-			} catch (error) {
-				auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
-				return errorResponse(error);
-			}
+				} catch (error) {
+					if (!hasLoggedToolCall) {
+						auditLogger.logToolCall(requestContext, { profile, workflowId, runId });
+					}
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
+					return errorResponse(error);
+				}
 		},
 	);
 }
