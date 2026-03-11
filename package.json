@@ -4,6 +4,7 @@
   "type": "module",
   "workspaces": ["packages/*"],
   "scripts": {
+    "check": "bun run typecheck && bun run test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "bun test",
     "test:coverage": "bun test --coverage"
