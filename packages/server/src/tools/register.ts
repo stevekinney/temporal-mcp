@@ -1,102 +1,29 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod/v4';
+import type { InMemoryTaskStore } from '@modelcontextprotocol/sdk/experimental/tasks';
 import type { TemporalConnectionManager } from '../../../temporal/src/connection.ts';
-import { listWorkflows } from '../../../temporal/src/tools/workflow/list.ts';
-import { describeWorkflow } from '../../../temporal/src/tools/workflow/describe.ts';
-import { errorResponse } from './response-helpers.ts';
-import { inputSchema } from './zod-compat.ts';
+import type { AppConfigContract } from '../contracts/config.ts';
+import { DEFAULT_APP_CONFIG } from '../config/schema.ts';
+import { AuditLogger } from '../safety/audit-log.ts';
+import { registerWorkflowTools } from './register-workflow.ts';
+
+export interface RegisterTemporalToolsOptions {
+	configuration?: AppConfigContract;
+	auditLogger?: AuditLogger;
+	taskStore?: InMemoryTaskStore;
+}
 
 export function registerTemporalTools(
 	server: McpServer,
 	connectionManager: TemporalConnectionManager,
-) {
-	server.registerTool(
-		'temporal.workflow.list',
-		{
-			description:
-				'List workflows from a Temporal cluster. Supports visibility query filters.',
-			inputSchema: inputSchema({
-				profile: z
-					.string()
-					.optional()
-					.describe('Temporal connection profile name'),
-				query: z
-					.string()
-					.optional()
-					.describe(
-						"Visibility query filter (e.g. WorkflowType='MyWorkflow')",
-					),
-				pageSize: z
-					.number()
-					.min(1)
-					.max(100)
-					.default(10)
-					.describe('Maximum number of workflows to return'),
-			}),
-		},
-		async ({ profile, query, pageSize }: any) => {
-			try {
-				const client = await connectionManager.getClient(profile);
-				const workflows = await listWorkflows(client, { query, pageSize });
+	options?: RegisterTemporalToolsOptions,
+): void {
+	const { configuration = DEFAULT_APP_CONFIG, auditLogger = new AuditLogger(), taskStore } = options ?? {};
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{ ok: true, data: workflows },
-								null,
-								2,
-							),
-						},
-					],
-				};
-			} catch (error) {
-				return errorResponse(error);
-			}
-		},
-	);
-
-	server.registerTool(
-		'temporal.workflow.describe',
-		{
-			description:
-				'Get detailed information about a specific workflow execution.',
-			inputSchema: inputSchema({
-				profile: z
-					.string()
-					.optional()
-					.describe('Temporal connection profile name'),
-				workflowId: z.string().describe('The workflow ID to describe'),
-				runId: z
-					.string()
-					.optional()
-					.describe('Specific run ID (defaults to latest run)'),
-			}),
-		},
-		async ({ profile, workflowId, runId }: any) => {
-			try {
-				const client = await connectionManager.getClient(profile);
-				const description = await describeWorkflow(client, {
-					workflowId,
-					runId,
-				});
-
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{ ok: true, data: description },
-								null,
-								2,
-							),
-						},
-					],
-				};
-			} catch (error) {
-				return errorResponse(error);
-			}
-		},
-	);
+	registerWorkflowTools({
+		server,
+		connectionManager,
+		config: configuration,
+		auditLogger,
+		taskStore,
+	});
 }

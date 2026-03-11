@@ -17,7 +17,7 @@ const config: TemporalConfig = {
 };
 
 describe('registerTemporalTools', () => {
-	test('registers two tools on the server', () => {
+	test('registers workflow tools on the server', () => {
 		const { server } = createServer({ config: DEFAULT_APP_CONFIG });
 		const manager = new TemporalConnectionManager(config);
 		registerTemporalTools(server, manager);
@@ -25,7 +25,10 @@ describe('registerTemporalTools', () => {
 });
 
 describe('registerTemporalTools — handler behavior', () => {
-	type ToolCallback = (args: Record<string, unknown>) => Promise<unknown>;
+	type ToolCallback = (
+		args: Record<string, unknown>,
+		extra?: Record<string, unknown>,
+	) => Promise<unknown>;
 
 	function setup() {
 		const handlers = new Map<string, ToolCallback>();
@@ -40,19 +43,35 @@ describe('registerTemporalTools — handler behavior', () => {
 		};
 
 		const getClient = mock();
-		const fakeConnectionManager = { getClient } as unknown as TemporalConnectionManager;
+		const resolveProfileName = mock((profile?: string) => profile ?? 'test');
+		const getProfileConfiguration = mock(() => ({
+			kind: 'self-hosted' as const,
+			address: 'localhost:7233',
+			namespace: 'default',
+		}));
+		const fakeConnectionManager = {
+			getClient,
+			resolveProfileName,
+			getProfileConfiguration,
+		} as unknown as TemporalConnectionManager;
 
 		registerTemporalTools(fakeServer as any, fakeConnectionManager);
 
 		return { handlers, getClient };
 	}
 
-	test('registers exactly the two expected tool names', () => {
+	test('registers the expected workflow tool names', () => {
 		const { handlers } = setup();
 		const names = [...handlers.keys()].sort();
 		expect(names).toEqual([
+			'temporal.workflow.count',
 			'temporal.workflow.describe',
+			'temporal.workflow.history',
+			'temporal.workflow.history.reverse',
+			'temporal.workflow.history.summarize',
 			'temporal.workflow.list',
+			'temporal.workflow.query',
+			'temporal.workflow.result',
 		]);
 	});
 

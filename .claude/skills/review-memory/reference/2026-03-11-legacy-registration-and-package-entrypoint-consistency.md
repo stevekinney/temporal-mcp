@@ -1,0 +1,3 @@
+- Legacy tool-registration entrypoints must delegate to the shared `ToolRegistrationContext` pipeline so policy gates, audit logging, and redaction behavior stay consistent with modern registrations.
+- Package export maps must target real entrypoint files; when `exports["."]` references `src/index.ts`, keep a maintained barrel file at that path.
+- Legacy handler tests should assert stable workflow-level behavior (registered tool surface and envelope semantics) while mocking policy-scope connection methods used by shared registration.
