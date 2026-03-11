@@ -102,6 +102,7 @@ export function registerDocsTools(context: ToolRegistrationContext): void {
 				);
 				const index = await loadPersistedIndex();
 				if (!index) {
+					auditLogger.logToolResult(requestContext, 'error', Date.now() - startTime);
 					return errorResponse({
 						ok: false,
 						error: {

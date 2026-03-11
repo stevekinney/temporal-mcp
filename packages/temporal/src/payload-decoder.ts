@@ -27,22 +27,63 @@ const PRIVATE_HOSTNAMES = [
 	/^localhost$/i,
 ];
 
+function stripIPv6Brackets(hostname: string): string {
+	if (hostname.startsWith('[') && hostname.endsWith(']')) {
+		return hostname.slice(1, -1);
+	}
+	return hostname;
+}
+
+function decodeIPv6MappedIPv4(ipv6: string): string | null {
+	const mappedPrefix = '::ffff:';
+	if (!ipv6.toLowerCase().startsWith(mappedPrefix)) {
+		return null;
+	}
+
+	const mappedPart = ipv6.slice(mappedPrefix.length);
+	if (mappedPart.includes('.')) {
+		return mappedPart;
+	}
+
+	const match = mappedPart.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+	if (!match) {
+		return null;
+	}
+
+	const left = Number.parseInt(match[1]!, 16);
+	const right = Number.parseInt(match[2]!, 16);
+	const octets = [
+		(left >> 8) & 0xff,
+		left & 0xff,
+		(right >> 8) & 0xff,
+		right & 0xff,
+	];
+	return octets.join('.');
+}
+
 function isPrivateAddress(url: string): boolean {
 	try {
 		const parsed = new URL(url);
-		if (PRIVATE_HOSTNAMES.some((pattern) => pattern.test(parsed.hostname))) {
+		const hostname = stripIPv6Brackets(parsed.hostname);
+		if (PRIVATE_HOSTNAMES.some((pattern) => pattern.test(hostname))) {
 			return true;
 		}
 
-		const ipVersion = isIP(parsed.hostname);
+		const ipVersion = isIP(hostname);
 		if (ipVersion === 4) {
 			return PRIVATE_IPV4_RANGES.some((pattern) =>
-				pattern.test(parsed.hostname),
+				pattern.test(hostname),
 			);
 		}
 		if (ipVersion === 6) {
+			const mappedIPv4 = decodeIPv6MappedIPv4(hostname);
+			if (mappedIPv4) {
+				return PRIVATE_IPV4_RANGES.some((pattern) =>
+					pattern.test(mappedIPv4),
+				);
+			}
 			return PRIVATE_IPV6_RANGES.some((pattern) =>
-				pattern.test(parsed.hostname),
+				pattern.test(hostname),
 			);
 		}
 
@@ -179,7 +220,7 @@ export class PayloadDecoder {
 
 			const result = await response.json();
 			const decoded = (result as any).payloads?.[0];
-			if (decoded) {
+			if (decoded !== undefined) {
 				return { decoded: true, data: decoded };
 			}
 			return { decoded: false, reason: 'Codec returned empty result' };

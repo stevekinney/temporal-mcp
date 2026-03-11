@@ -147,6 +147,34 @@ describe('PayloadDecoder', () => {
 			expect(results[0]!.reason).toContain('private address');
 		});
 
+		test('blocks private IPv6 loopback addresses', async () => {
+			const decoder = new PayloadDecoder({
+				codecEndpoint: 'http://[::1]:8080/decode',
+			});
+			const payload = {
+				metadata: { encoding: 'binary/encrypted' },
+				data: new Uint8Array([1, 2, 3]),
+			};
+
+			const results = await decoder.decode([payload]);
+			expect(results[0]!.decoded).toBe(false);
+			expect(results[0]!.reason).toContain('private address');
+		});
+
+		test('blocks private IPv6-mapped IPv4 addresses', async () => {
+			const decoder = new PayloadDecoder({
+				codecEndpoint: 'http://[::ffff:127.0.0.1]:8080/decode',
+			});
+			const payload = {
+				metadata: { encoding: 'binary/encrypted' },
+				data: new Uint8Array([1, 2, 3]),
+			};
+
+			const results = await decoder.decode([payload]);
+			expect(results[0]!.decoded).toBe(false);
+			expect(results[0]!.reason).toContain('private address');
+		});
+
 		test('allows public hostnames that start with "fc"', async () => {
 			const decoder = new PayloadDecoder({
 				codecEndpoint: 'https://fc.example.com/decode',
@@ -291,6 +319,35 @@ describe('PayloadDecoder', () => {
 			expect(results[1]!.decoded).toBe(false);
 			expect(results[2]!.decoded).toBe(true);
 			expect(results[2]!.data).toEqual({ b: 2 });
+		});
+	});
+
+	describe('codec response handling', () => {
+		test('accepts falsy decoded payload values from codec', async () => {
+			const decoder = new PayloadDecoder({
+				codecEndpoint: 'https://codec.example.com/decode',
+			});
+			const originalFetch = globalThis.fetch;
+			globalThis.fetch = mock(async () =>
+				new Response(
+					JSON.stringify({
+						payloads: [0],
+					}),
+					{ status: 200 },
+				),
+			) as any;
+
+			try {
+				const payload = {
+					metadata: { encoding: 'binary/encrypted' },
+					data: new Uint8Array([1, 2, 3]),
+				};
+				const results = await decoder.decode([payload]);
+				expect(results[0]!.decoded).toBe(true);
+				expect(results[0]!.data).toBe(0);
+			} finally {
+				globalThis.fetch = originalFetch;
+			}
 		});
 	});
 });
