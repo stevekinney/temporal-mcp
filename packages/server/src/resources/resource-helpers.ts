@@ -11,6 +11,10 @@ export interface ResourcePolicyScope {
 	namespace?: string;
 }
 
+export interface ResourceCallLoggingState {
+	hasLoggedToolCall: boolean;
+}
+
 export function getVariable(
 	variables: ResourceTemplateVariables,
 	key: string,
@@ -54,4 +58,15 @@ export function jsonResourceContent(
 		mimeType: 'application/json',
 		text: JSON.stringify(redactSensitiveFields(payload), null, 2),
 	};
+}
+
+export function logToolCallOnce(
+	context: ResourceRegistrationContext,
+	requestContext: RequestContext,
+	args: Record<string, unknown>,
+	state: ResourceCallLoggingState,
+): void {
+	if (state.hasLoggedToolCall) return;
+	context.auditLogger.logToolCall(requestContext, args);
+	state.hasLoggedToolCall = true;
 }

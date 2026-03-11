@@ -5,6 +5,7 @@ import {
 	assertResourcePolicy,
 	getVariable,
 	jsonResourceContent,
+	logToolCallOnce,
 	type ResourceTemplateVariables,
 } from './resource-helpers.ts';
 
@@ -25,17 +26,25 @@ export function registerScheduleResources(
 		async (uri: URL, variables: ResourceTemplateVariables) => {
 			const profile = getVariable(variables, 'profile');
 			const scheduleId = getVariable(variables, 'scheduleId');
-			const effectiveProfile =
-				connectionManager.resolveProfileName(profile || undefined);
-			const profileConfiguration =
-				connectionManager.getProfileConfiguration(effectiveProfile);
 			const requestContext = buildRequestContext('resource.temporal-schedule', {
-				profile: effectiveProfile,
+				profile: profile || undefined,
 			});
-			auditLogger.logToolCall(requestContext, { profile: effectiveProfile, scheduleId });
 			const startTime = Date.now();
+			const loggingState = { hasLoggedToolCall: false };
 
 			try {
+				const effectiveProfile =
+					connectionManager.resolveProfileName(profile || undefined);
+				requestContext.profile = effectiveProfile;
+				logToolCallOnce(
+					context,
+					requestContext,
+					{ profile: effectiveProfile, scheduleId },
+					loggingState,
+				);
+				const profileConfiguration =
+					connectionManager.getProfileConfiguration(effectiveProfile);
+
 				assertResourcePolicy(
 					context,
 					'temporal.schedule.describe',
@@ -59,6 +68,12 @@ export function registerScheduleResources(
 				);
 				return result;
 			} catch (error) {
+				logToolCallOnce(
+					context,
+					requestContext,
+					{ profile: profile || undefined, scheduleId },
+					loggingState,
+				);
 				auditLogger.logToolResult(
 					requestContext,
 					'error',

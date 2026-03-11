@@ -6,6 +6,7 @@ import {
 	assertResourcePolicy,
 	getVariable,
 	jsonResourceContent,
+	logToolCallOnce,
 	type ResourceTemplateVariables,
 } from './resource-helpers.ts';
 
@@ -26,22 +27,30 @@ export function registerNamespaceResources(
 		async (uri: URL, variables: ResourceTemplateVariables) => {
 			const profile = getVariable(variables, 'profile');
 			const namespace = getVariable(variables, 'namespace');
-			const effectiveProfile =
-				connectionManager.resolveProfileName(profile || undefined);
 			const requestContext = buildRequestContext(
 				'resource.temporal-namespace',
 				{
-					profile: effectiveProfile,
+					profile: profile || undefined,
 					namespace,
 				},
 			);
-			auditLogger.logToolCall(requestContext, {
-				profile: effectiveProfile,
-				namespace,
-			});
 			const startTime = Date.now();
+			const loggingState = { hasLoggedToolCall: false };
 
 			try {
+				const effectiveProfile =
+					connectionManager.resolveProfileName(profile || undefined);
+				requestContext.profile = effectiveProfile;
+				logToolCallOnce(
+					context,
+					requestContext,
+					{
+						profile: effectiveProfile,
+						namespace,
+					},
+					loggingState,
+				);
+
 				assertResourcePolicy(
 					context,
 					'temporal.namespace.describe',
@@ -64,6 +73,12 @@ export function registerNamespaceResources(
 				);
 				return resourceResult;
 			} catch (error) {
+				logToolCallOnce(
+					context,
+					requestContext,
+					{ profile: profile || undefined, namespace },
+					loggingState,
+				);
 				auditLogger.logToolResult(
 					requestContext,
 					'error',

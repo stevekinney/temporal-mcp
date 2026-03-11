@@ -6,6 +6,7 @@ import {
 	assertResourcePolicy,
 	getVariable,
 	jsonResourceContent,
+	logToolCallOnce,
 	type ResourceTemplateVariables,
 } from './resource-helpers.ts';
 
@@ -26,18 +27,26 @@ export function registerTaskQueueResources(
 		async (uri: URL, variables: ResourceTemplateVariables) => {
 			const profile = getVariable(variables, 'profile');
 			const taskQueue = getVariable(variables, 'taskQueue');
-			const effectiveProfile =
-				connectionManager.resolveProfileName(profile || undefined);
-			const profileConfiguration =
-				connectionManager.getProfileConfiguration(effectiveProfile);
 			const requestContext = buildRequestContext(
 				'resource.temporal-task-queue',
-				{ profile: effectiveProfile },
+				{ profile: profile || undefined },
 			);
-			auditLogger.logToolCall(requestContext, { profile: effectiveProfile, taskQueue });
 			const startTime = Date.now();
+			const loggingState = { hasLoggedToolCall: false };
 
 			try {
+				const effectiveProfile =
+					connectionManager.resolveProfileName(profile || undefined);
+				requestContext.profile = effectiveProfile;
+				logToolCallOnce(
+					context,
+					requestContext,
+					{ profile: effectiveProfile, taskQueue },
+					loggingState,
+				);
+				const profileConfiguration =
+					connectionManager.getProfileConfiguration(effectiveProfile);
+
 				assertResourcePolicy(
 					context,
 					'temporal.task-queue.describe',
@@ -63,6 +72,12 @@ export function registerTaskQueueResources(
 				);
 				return resourceResult;
 			} catch (error) {
+				logToolCallOnce(
+					context,
+					requestContext,
+					{ profile: profile || undefined, taskQueue },
+					loggingState,
+				);
 				auditLogger.logToolResult(
 					requestContext,
 					'error',

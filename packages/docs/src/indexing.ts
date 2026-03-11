@@ -22,8 +22,8 @@ function getIndexPath(): string {
 	return join(getCacheDir(), 'docs-index.json');
 }
 
-export function createSearchIndex(chunks: DocChunk[]): MiniSearch {
-	const miniSearch = new MiniSearch({
+function createMiniSearchOptions() {
+	return {
 		fields: ['title', 'headingPath', 'text'],
 		storeFields: ['title', 'headingPath', 'sourcePath', 'sdk', 'section'],
 		idField: 'id',
@@ -32,7 +32,11 @@ export function createSearchIndex(chunks: DocChunk[]): MiniSearch {
 			fuzzy: 0.2,
 			prefix: true,
 		},
-	});
+	};
+}
+
+export function createSearchIndex(chunks: DocChunk[]): MiniSearch {
+	const miniSearch = new MiniSearch(createMiniSearchOptions());
 
 	const documents = chunks.map((chunk, index) => ({
 		id: index,
@@ -82,11 +86,10 @@ export async function loadPersistedIndex(): Promise<MiniSearch | null> {
 		const file = Bun.file(getIndexPath());
 		if (!(await file.exists())) return null;
 		const serializedIndex = await file.text();
-		return MiniSearch.loadJSON(serializedIndex, {
-			fields: ['title', 'headingPath', 'text'],
-			storeFields: ['title', 'headingPath', 'sourcePath', 'sdk', 'section'],
-			idField: 'id',
-		});
+		return MiniSearch.loadJSON(
+			serializedIndex,
+			createMiniSearchOptions(),
+		);
 	} catch {
 		return null;
 	}

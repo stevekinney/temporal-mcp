@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'bun:test';
-import { createSearchIndex, searchIndex } from '../src/indexing.ts';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+	createSearchIndex,
+	loadPersistedIndex,
+	persistIndex,
+	searchIndex,
+} from '../src/indexing.ts';
 import type { DocChunk } from '../src/chunking.ts';
 
 function makeChunks(): DocChunk[] {
@@ -78,5 +86,36 @@ describe('searchIndex', () => {
 		const index = createSearchIndex(makeChunks());
 		const results = searchIndex(index, '');
 		expect(results.length).toBe(0);
+	});
+
+	test('preserves search behavior after persisted index reload', async () => {
+		const originalHome = process.env.HOME;
+		const temporaryHome = await mkdtemp(
+			join(tmpdir(), 'temporal-mcp-docs-index-'),
+		);
+		process.env.HOME = temporaryHome;
+
+		try {
+			const index = createSearchIndex(makeChunks());
+			await persistIndex(index);
+
+			const reloadedIndex = await loadPersistedIndex();
+			expect(reloadedIndex).not.toBeNull();
+
+			const prefixQuery = 'workflo';
+			expect(searchIndex(index, prefixQuery).length).toBeGreaterThan(0);
+			expect(
+				searchIndex(reloadedIndex!, prefixQuery).length,
+			).toBeGreaterThan(0);
+
+			const fuzzyQuery = 'wrkflow';
+			expect(searchIndex(index, fuzzyQuery).length).toBeGreaterThan(0);
+			expect(
+				searchIndex(reloadedIndex!, fuzzyQuery).length,
+			).toBeGreaterThan(0);
+		} finally {
+			process.env.HOME = originalHome;
+			await rm(temporaryHome, { recursive: true, force: true });
+		}
 	});
 });

@@ -5,6 +5,7 @@ import {
 	assertResourcePolicy,
 	getVariable,
 	jsonResourceContent,
+	logToolCallOnce,
 	type ResourceTemplateVariables,
 } from './resource-helpers.ts';
 
@@ -25,17 +26,25 @@ export function registerWorkflowResources(
 		async (uri: URL, variables: ResourceTemplateVariables) => {
 			const profile = getVariable(variables, 'profile');
 			const workflowId = getVariable(variables, 'workflowId');
-			const effectiveProfile =
-				connectionManager.resolveProfileName(profile || undefined);
-			const profileConfiguration =
-				connectionManager.getProfileConfiguration(effectiveProfile);
 			const requestContext = buildRequestContext('resource.temporal-workflow', {
-				profile: effectiveProfile,
+				profile: profile || undefined,
 			});
-			auditLogger.logToolCall(requestContext, { profile: effectiveProfile, workflowId });
 			const startTime = Date.now();
+			const loggingState = { hasLoggedToolCall: false };
 
 			try {
+				const effectiveProfile =
+					connectionManager.resolveProfileName(profile || undefined);
+				requestContext.profile = effectiveProfile;
+				logToolCallOnce(
+					context,
+					requestContext,
+					{ profile: effectiveProfile, workflowId },
+					loggingState,
+				);
+				const profileConfiguration =
+					connectionManager.getProfileConfiguration(effectiveProfile);
+
 				assertResourcePolicy(
 					context,
 					'temporal.workflow.describe',
@@ -59,6 +68,12 @@ export function registerWorkflowResources(
 				);
 				return result;
 			} catch (error) {
+				logToolCallOnce(
+					context,
+					requestContext,
+					{ profile: profile || undefined, workflowId },
+					loggingState,
+				);
 				auditLogger.logToolResult(
 					requestContext,
 					'error',
