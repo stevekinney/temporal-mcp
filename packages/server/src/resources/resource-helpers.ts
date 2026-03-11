@@ -1,8 +1,8 @@
-import { getToolContract } from '../../../temporal/src/capability-matrix.ts';
 import { evaluatePolicy } from '../policy/evaluate.ts';
 import type { ResourceRegistrationContext } from './register.ts';
 import { redactSensitiveFields } from '../safety/redaction.ts';
 import type { RequestContext } from '../safety/request-context.ts';
+import { requireToolContract } from '../tools/tool-contract.ts';
 
 export type ResourceTemplateVariables = Record<string, string | string[]>;
 
@@ -27,17 +27,7 @@ export function assertResourcePolicy(
 	scope: ResourcePolicyScope,
 	requestContext?: RequestContext,
 ): void {
-	const contract = getToolContract(toolName);
-	if (!contract) {
-		throw {
-			ok: false,
-			error: {
-				code: 'TOOL_NOT_FOUND',
-				message: `Tool "${toolName}" is not registered in the capability matrix`,
-				retryable: false,
-			},
-		};
-	}
+	const contract = requireToolContract(toolName);
 
 	const decision = evaluatePolicy(context.config.policy, contract, scope);
 	if (requestContext) {

@@ -210,6 +210,15 @@ describe('evaluatePolicy', () => {
 			expect(result.allowed).toBe(true);
 			expect(result.code).toBe('ALLOWED');
 		});
+
+		test('allows when break-glass env var is set to empty string', () => {
+			process.env[breakGlassVariable] = '';
+			const config = makeConfig({ mode: 'unsafe', breakGlassVariable });
+			const tool = makeToolContract({ risk: 'admin' });
+			const result = evaluatePolicy(config, tool, {});
+			expect(result.allowed).toBe(true);
+			expect(result.code).toBe('ALLOWED');
+		});
 	});
 
 	describe('profile allowlist', () => {

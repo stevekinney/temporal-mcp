@@ -119,7 +119,7 @@ function evaluateMode(
 		}
 		case 'unsafe': {
 			const breakGlassValue = process.env[config.breakGlassVariable];
-			if (!breakGlassValue) {
+			if (breakGlassValue === undefined) {
 				return {
 					allowed: false,
 					reason: `Unsafe mode requires the "${config.breakGlassVariable}" environment variable to be set`,
