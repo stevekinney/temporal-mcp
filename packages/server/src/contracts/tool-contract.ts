@@ -2,12 +2,12 @@ export type Risk = 'read' | 'write' | 'destructive' | 'admin';
 
 export type ImplementationBackend =
   | 'sdk'
-  | 'workflowService'
-  | 'operatorService'
+  | 'workflow-service'
+  | 'operator-service'
   | 'cloud'
   | 'cli';
 
-export type Availability = 'selfHosted' | 'cloud' | 'both';
+export type Availability = 'self-hosted' | 'cloud' | 'both';
 
 export type Stability = 'stable' | 'experimental' | 'deprecated';
 

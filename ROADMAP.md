@@ -1660,6 +1660,118 @@ Critical path: `N1 -> N2 -> N3 -> N8 -> N11 -> N12 -> N13 -> N14`
 5. Bun-only runtime is accepted for this release train.
 6. Orchestrator enforcement exists for branch order, ownership, and merge guards.
 
+# Progress
+
+## Completed
+
+- [x] Monorepo scaffolding (Bun workspaces, `packages/server` + `packages/temporal`, root `tsconfig.json`)
+- [x] First runnable MCP server skeleton (`packages/server/src/server.ts`, stdio transport in `src/index.ts`)
+- [x] Configuration system — schema with defaults (`packages/server/src/config/schema.ts`), Zod-validated loader with candidate discovery chain (`packages/server/src/config/load.ts`), deep merge of partial overrides
+- [x] Configuration contracts — `McpCapabilitiesConfig`, `TransportConfig`, `SecurityConfig`, `TemporalProfileConfig`, `TemporalConfig`, `AppConfigContract` (`packages/server/src/contracts/config.ts`)
+- [x] Tool contract and registry metadata types — `Risk`, `ImplementationBackend`, `Availability`, `Stability`, `ToolContract` (`packages/server/src/contracts/tool-contract.ts`)
+- [x] Error envelope contracts — `ErrorEnvelope`, `SuccessEnvelope<T>`, `ResultEnvelope<T>` (`packages/server/src/contracts/error-envelope.ts`)
+- [x] Contract versioning (`packages/server/src/contracts/version.ts`, `contractsVersion = 1`)
+- [x] Profile routing — `TemporalConnectionManager` with self-hosted and cloud (API key) support, lazy client caching, structured error envelopes for missing/invalid profiles (`packages/temporal/src/connection.ts`)
+- [x] Temporal read-only tools — `temporal.workflow.list` with query filter and page size (`packages/temporal/src/tools/workflow-list.ts`), `temporal.workflow.describe` with full execution metadata (`packages/temporal/src/tools/workflow-describe.ts`)
+- [x] Tool registration with error wrapping — handler callbacks with success/error envelope formatting, `ErrorEnvelope` passthrough, `INTERNAL_ERROR` wrapping for untyped errors (`packages/server/src/tools/register.ts`)
+- [x] GitHub Actions CI pipeline — Bun setup, frozen lockfile install, typecheck, test with coverage (`.github/workflows/ci.yml`)
+- [x] Architecture documentation (`documentation/architecture.md`)
+- [x] Contributing guide (`documentation/contributing.md`)
+- [x] Unit tests for `listWorkflows` — empty results, pagination truncation, query passthrough, `closeTime` mapping, `status.name` conversion (`packages/temporal/test/workflow-list.test.ts`)
+- [x] Unit tests for `describeWorkflow` — full description, argument passthrough, null handling for `closeTime`/`executionTime`/`parentExecution`, defaults for `memo`/`searchAttributes` (`packages/temporal/test/workflow-describe.test.ts`)
+- [x] Unit tests for `TemporalConnectionManager` — profile resolution, error cases (`packages/temporal/test/connection.test.ts`)
+- [x] Handler behavior tests for `register.ts` — success envelopes, error envelope forwarding, `INTERNAL_ERROR` wrapping, non-Error wrapping, profile passthrough (`packages/server/test/tools/register.test.ts`)
+- [x] End-to-end stdio smoke test — initialization handshake, `tools/list`, `temporal.workflow.list` call, `temporal.workflow.describe` error case (`packages/server/test/tools/smoke.test.ts`)
+- [x] Contract compliance tests — config, error envelope, tool contract, version, barrel exports (`packages/server/test/contracts/`)
+- [x] Configuration tests — loader behavior, schema defaults (`packages/server/test/config/`)
+- [x] Server factory test (`packages/server/test/server.test.ts`)
+- [x] Server capabilities — `createServer` accepts `AppConfigContract`, sets `tools.listChanged`, `logging`, conditional `roots`, and server instructions (`packages/server/src/server.ts`)
+- [x] MCP logging wrapper — `McpLogger` class wrapping `server.sendLoggingMessage()` with stderr fallback (`packages/server/src/logging.ts`)
+- [x] Policy engine — `PolicyConfig` types, `evaluatePolicy()` pure function, `matchesPattern()` glob matching, `ToolRegistry` class (`packages/server/src/policy/`, `packages/server/src/contracts/policy.ts`, `packages/server/src/tools/registry.ts`)
+- [x] Capability matrix — static `TOOL_CONTRACTS` map for all 27 R1 tools, `assertToolAvailable()` with profile-kind routing guards (`packages/temporal/src/capability-matrix.ts`)
+- [x] Raw gRPC helpers — 13 typed wrappers for `workflowService`/`operatorService` proto calls (`packages/temporal/src/grpc.ts`)
+- [x] Cloud API stubs — placeholder error envelopes for unimplemented cloud operations (`packages/temporal/src/cloud.ts`)
+- [x] Docs subsystem — `@temporal-mcp/docs` package with sync, SDK detection, heading-aware chunking, MiniSearch indexing, status/search/get/refresh tools (`packages/docs/`)
+- [x] Workflow tools — `count`, `result`, `query`, `history`, `history.reverse`, `history.summarize` (`packages/temporal/src/tools/workflow/`)
+- [x] Schedule tools — `list`, `describe`, `matching-times` (`packages/temporal/src/tools/schedule/`)
+- [x] Infrastructure tools — task queue describe/config, namespace list/describe, search attributes list, cluster info (`packages/temporal/src/tools/infrastructure/`)
+- [x] Worker tools — versioning rules, task reachability, deployment list/describe/version/reachability (`packages/temporal/src/tools/worker/`)
+- [x] Connection check tool — `checkConnection()` via `getSystemInfo` (`packages/temporal/src/tools/connection-check.ts`)
+- [x] Safety hardening — `RequestContext`, `AuditLogger`, `redactSensitiveFields()` (`packages/server/src/safety/`)
+- [x] Response helpers — extracted `errorResponse()`, `successResponse()`, `isErrorEnvelope()` (`packages/server/src/tools/response-helpers.ts`)
+- [x] Tool registration refactor — family-based registration with policy guard + audit pipeline (`packages/server/src/tools/register-all.ts`, `register-workflow.ts`, `register-schedule.ts`, `register-infrastructure.ts`, `register-worker.ts`, `register-connection.ts`, `register-docs.ts`)
+- [x] Resource templates — workflow, schedule, task queue, namespace, docs URI templates (`packages/server/src/resources/`)
+- [x] Inline threshold — 32KB threshold check for large responses with summary + URI fallback (`packages/server/src/resources/inline-threshold.ts`)
+- [x] Elicitation — `requestConfirmation()` with capability detection and graceful degradation (`packages/server/src/elicitation/confirmation.ts`)
+- [x] Roots discovery — `RootsDiscovery` class with listener pattern and cache invalidation (`packages/server/src/roots/discovery.ts`)
+- [x] Payload decoder — 3-stage pipeline (JSON → remote codec → fallback), SSRF protection, codec allowlist (`packages/temporal/src/payload-decoder.ts`)
+- [x] Profile configuration access — `getProfileConfiguration()` on `TemporalConnectionManager` (`packages/temporal/src/connection.ts`)
+
+## Remaining
+
+### R1 Foundation
+
+- [x] MCP protocol lifecycle — `initialize` handshake validation, protocol version negotiation, capability negotiation, graceful shutdown (SDK handles lifecycle; `createServer` now passes capabilities and instructions)
+- [x] MCP required utilities — `ping`, cancellation (`notifications/cancelled`), progress (`notifications/progress`), pagination semantics, structured logging (`notifications/message`) (SDK handles ping/cancel/progress; `McpLogger` wraps `sendLoggingMessage` for structured audit/policy/connection events)
+- [x] Dynamic list notifications — `notifications/tools/list_changed`, `notifications/resources/list_changed`, `notifications/prompts/list_changed` (SDK handles automatically; `listChanged: true` configured in server capabilities)
+- [ ] Protocol conformance test suite (`packages/server/test/protocol/`)
+- [x] Capability matrix implementation — backend classification, availability assertions, profile-kind routing guards (`packages/temporal/src/capability-matrix.ts`)
+- [x] Policy engine — risk gating by mode (`readOnly`, `safeWrite`, `custom`, `unsafe`), `hardReadOnly` override, profile/namespace allowlists, allow/deny tool patterns, break-glass, structured policy errors (`packages/server/src/policy/`)
+- [ ] Tasks integration — `tasks/list`, `tasks/get`, `tasks/cancel` with TTL and cancellation (`packages/server/src/mcp/tasks.ts`)
+- [x] Elicitation integration — `elicitation/create` for high-risk confirmations, graceful degradation when host lacks capability (`packages/server/src/elicitation/confirmation.ts`)
+- [x] Roots integration — `roots/list` scanning boundary, `notifications/roots/list_changed` cache invalidation (`packages/server/src/roots/discovery.ts`)
+- [x] Docs subsystem — corpus sync, SDK detection and filtering, heading-aware chunking, MiniSearch indexing (`packages/docs/`)
+- [x] Docs MCP tools — `docs.status`, `docs.search`, `docs.get`, `docs.refresh`
+- [x] Remaining read-only Temporal tools — `temporal.workflow.count`, `temporal.workflow.result`, `temporal.workflow.query`, `temporal.workflow.history`, `temporal.workflow.history.reverse`, `temporal.workflow.history.summarize`
+- [x] Schedule read tools — `temporal.schedule.list`, `temporal.schedule.describe`, `temporal.schedule.matching-times`
+- [x] Infrastructure and metadata read tools — `temporal.task-queue.describe`, `temporal.task-queue.configuration`, `temporal.namespace.list`, `temporal.namespace.describe`, `temporal.search-attributes.list`, `temporal.cluster.info`
+- [x] Worker versioning and deployment read tools — `temporal.worker.versioning-rules`, `temporal.worker.task-reachability`, `temporal.worker.deployment.list`, `temporal.worker.deployment.describe`, `temporal.worker.deployment.version.describe`, `temporal.worker.deployment.reachability`
+- [x] Payload decoding and codec support — default JSON converter, optional remote codec, graceful undecoded fallback, `security.codecAllowlist`, SSRF protection (`packages/temporal/src/payload-decoder.ts`)
+- [x] Resources and resource templates — workflow, schedule, task queue, namespace, docs resource templates, inline threshold handling (`packages/server/src/resources/`)
+- [x] Safety hardening — request IDs, structured audit logs, redaction filters, `notifications/message` for policy/audit/connection events (`packages/server/src/safety/`)
+- [x] Temporal connectivity check tool — `temporal.connection.check`
+- [x] Raw gRPC and cloud fallback handlers (`packages/temporal/src/grpc.ts`, `packages/temporal/src/cloud.ts`)
+
+### R2 GA
+
+- [ ] Safe-write workflow tools — `temporal.workflow.start`, `temporal.workflow.execute`, `temporal.workflow.signal`, `temporal.workflow.signalWithStart`, `temporal.workflow.update`, `temporal.workflow.updateWithStart`
+- [ ] Safe-write schedule tools — `temporal.schedule.create`, `temporal.schedule.update`, `temporal.schedule.trigger`, `temporal.schedule.backfill`
+- [ ] Safe-write activity tools — `temporal.activity.complete`, `temporal.activity.fail`, `temporal.activity.heartbeat`, `temporal.activity.reportCancellation`, `temporal.activity.updateOptions`, `temporal.activity.reset`
+- [ ] Safe-write infrastructure tools — `temporal.searchAttributes.add`, `temporal.taskQueue.config.set`
+- [ ] Safe-write worker versioning tools — `temporal.worker.versioningRules.insert`, `temporal.worker.versioningRules.replace`, `temporal.worker.versioningRules.addRedirect`, `temporal.worker.versioningRules.replaceRedirect`, `temporal.worker.versioningRules.commitBuildId`
+- [ ] Safe-write deployment tools — `temporal.worker.deployment.setCurrentVersion`, `temporal.worker.deployment.setRampingVersion`, `temporal.worker.deployment.updateMetadata`
+- [ ] Idempotency key support for write paths
+- [ ] Cancellation-aware handlers for long-running operations
+- [ ] Progress token support for operations exceeding host timeouts
+- [ ] Operator-grade reliability — deadlines/timeouts for all Temporal calls, cancellation propagation, TTL caches, memory guards, payload caps, progress updates every 2 seconds or less
+- [ ] Prompt templates — `temporal-triage`, `temporal-debug-workflow`, `temporal-docs-answer`, `temporal-safe-mutation`
+- [ ] Completions — `completion/complete` for `ref/prompt` and `ref/resource`
+- [ ] Resource subscriptions for live monitoring — workflow, task queue, schedule with bounded polling
+- [ ] Packaging — `bin` entry (`bunx temporal-mcp`), `--config`, `--print-effective-config`, Dockerfile
+- [ ] Documentation generation — `scripts/generate-config-docs.ts`, `scripts/generate-tool-docs.ts`
+- [ ] Full documentation set — getting started, config reference, tool catalog by risk, host setup guides, policy guide, resources/prompts, contributing guide
+- [ ] GA release gates — protocol conformance tests pass, read and safe-write tool suites pass against local Temporal integration, cloud/self-hosted routing validated, policy bypass regressions blocked in CI
+
+### R3 Post-GA
+
+- [ ] Destructive workflow tools — `temporal.workflow.cancel`, `temporal.workflow.terminate`, `temporal.workflow.reset`, `temporal.workflow.delete`, `temporal.workflow.pause`, `temporal.workflow.unpause`
+- [ ] Destructive activity tools — `temporal.activity.pause`, `temporal.activity.unpause`
+- [ ] Destructive schedule tools — `temporal.schedule.pause`, `temporal.schedule.unpause`, `temporal.schedule.delete`
+- [ ] Destructive infrastructure tools — `temporal.searchAttributes.remove`
+- [ ] Destructive versioning and deployment tools — delete assignment, redirect, deployments, versions
+- [ ] Dual-confirm contract — preview phase with `confirmationToken` and affected summary, execute phase with token and reason, one-time-use tokens with TTL
+- [ ] Batch operations — `temporal.batch.list`, `temporal.batch.describe`, `temporal.batch.terminate`, `temporal.batch.cancel`, `temporal.batch.signal`, `temporal.batch.reset`, `temporal.batch.delete`
+- [ ] Raw gRPC escape hatch — `temporal.grpc.call` with method allowlist, payload limits, full audit
+- [ ] CLI passthrough — `temporal.cli.exec` with command allowlist, JSON output requirement
+
+### R4 Remote Deployments
+
+- [ ] Streamable HTTP transport with explicit auth mode decision
+- [ ] Mode A: OAuth-compliant MCP authorization — discovery, token validation, scope checks, cross-origin policies
+- [ ] Mode B: Internal/local-only — bind constraints, explicit warnings, non-public deployment guidance
+- [ ] Sampling for LLM-powered analysis — history analysis, cross-workflow failure correlation, docs-augmented diagnosis, visibility query construction
+- [ ] Embeddings and hybrid docs search — opt-in embeddings, lexical top-N plus rerank, provider abstraction, lexical fallback
+
 # Reference Sources
 
 - [MCP docs index](https://modelcontextprotocol.io/llms.txt)
