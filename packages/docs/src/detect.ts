@@ -41,6 +41,11 @@ async function hasTemporalDotnetProject(root: string): Promise<boolean> {
 		}
 
 		for (const entry of entries) {
+			// Match prior Glob defaults by excluding hidden files/directories.
+			if (entry.name.startsWith('.')) {
+				continue;
+			}
+
 			const fullPath = join(directoryPath, entry.name);
 			if (entry.isDirectory()) {
 				pendingDirectories.push(fullPath);

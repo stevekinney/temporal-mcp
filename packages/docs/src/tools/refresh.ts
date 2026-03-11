@@ -44,6 +44,11 @@ async function collectMarkdownSourcePaths(corpusPath: string): Promise<string[]>
 
 		const entries = await readdir(directoryPath, { withFileTypes: true });
 		for (const entry of entries) {
+			// Match prior Glob defaults by excluding hidden files/directories.
+			if (entry.name.startsWith('.')) {
+				continue;
+			}
+
 			const relativePath =
 				relativeDirectoryPath.length === 0
 					? entry.name

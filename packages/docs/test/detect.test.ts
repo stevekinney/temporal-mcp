@@ -97,4 +97,22 @@ describe('detectSdks', () => {
 			await rm(tempDir, { recursive: true });
 		}
 	});
+
+	test('ignores dotnet markers inside hidden directories', async () => {
+		const tempDir = await mkdtemp(join(tmpdir(), 'detect-dotnet-hidden-'));
+		try {
+			const hiddenPath = join(tempDir, '.hidden-service');
+			await mkdir(hiddenPath, { recursive: true });
+			await writeFile(
+				join(hiddenPath, 'Hidden.csproj'),
+				'<Project><ItemGroup><PackageReference Include="Temporalio" Version="1.0.0" /></ItemGroup></Project>',
+				'utf8',
+			);
+			const result = await detectSdks({ scanRoots: [tempDir] });
+			expect(result.detectedSdks).not.toContain('dotnet');
+			expect(result.source).toBe('fallback');
+		} finally {
+			await rm(tempDir, { recursive: true });
+		}
+	});
 });
