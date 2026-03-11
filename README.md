@@ -291,6 +291,9 @@ packages/
 
 ```bash
 bun install
-bun test
-bun run typecheck
+bun run check
+# optional coverage report
+bun run test:coverage
 ```
+
+For pull request validation expectations and CI parity details, see [CONTRIBUTING.md](./CONTRIBUTING.md).
