@@ -1,6 +1,6 @@
 {
   "name": "temporal-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read-only MCP server for inspecting Temporal workflows, schedules, infrastructure, and documentation.",
   "license": "MIT",
   "repository": {
@@ -29,7 +29,9 @@
     "LICENSE"
   ],
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "engines": {
     "node": ">=20"
   },
