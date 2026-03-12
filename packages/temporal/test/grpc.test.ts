@@ -41,14 +41,16 @@ function createMockClient(overrides: Record<string, any> = {}) {
 			getDeploymentReachability: mock(() => Promise.resolve({})),
 			...overrides.workflowService,
 		},
-		operatorService: {
-			listSearchAttributes: mock(() =>
-				Promise.resolve({
-					customAttributes: {},
-					systemAttributes: {},
-				}),
-			),
-			...overrides.operatorService,
+		connection: {
+			operatorService: {
+				listSearchAttributes: mock(() =>
+					Promise.resolve({
+						customAttributes: {},
+						systemAttributes: {},
+					}),
+				),
+				...overrides.operatorService,
+			},
 		},
 	} as any;
 }
@@ -407,7 +409,7 @@ describe('listSearchAttributes', () => {
 		await listSearchAttributes(client, { namespace: 'default' });
 
 		expect(
-			client.operatorService.listSearchAttributes,
+			client.connection.operatorService.listSearchAttributes,
 		).toHaveBeenCalledWith({ namespace: 'default' });
 	});
 

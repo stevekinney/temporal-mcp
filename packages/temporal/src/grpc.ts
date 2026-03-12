@@ -198,7 +198,7 @@ export async function listSearchAttributes(
 	client: Client,
 	params: { namespace: string },
 ): Promise<SearchAttributeList> {
-	const response = await (client as any).operatorService.listSearchAttributes(
+	const response = await (client.connection as any).operatorService.listSearchAttributes(
 		{
 			namespace: params.namespace,
 		},

@@ -6,7 +6,9 @@ function createMockClient(response: Record<string, unknown> = { customAttributes
 	const grpcFn = mock(() => Promise.resolve(response));
 	return {
 		client: {
-			operatorService: { listSearchAttributes: grpcFn },
+			connection: {
+				operatorService: { listSearchAttributes: grpcFn },
+			},
 		} as unknown as Client,
 		grpcFn,
 	};
