@@ -36,9 +36,6 @@ jobs:
       - name: Validate
         run: bun run check
 
-      - name: Build
-        run: bun run build
-
       - name: Publish package
         env:
           NPM_CONFIG_PROVENANCE: "true"
