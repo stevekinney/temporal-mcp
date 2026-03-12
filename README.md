@@ -313,10 +313,11 @@ npm pack --dry-run
 3. Publish the initial package:
 
 ```bash
-npm publish --access public --provenance
+npm publish --access public
 ```
 
 4. In npm package settings, add trusted publishing for this repository and `.github/workflows/release.yml`.
+   Provenance is generated automatically in the tag-driven CI release workflow once OIDC trusted publishing is configured.
 
 ### Ongoing releases (tag-driven)
 

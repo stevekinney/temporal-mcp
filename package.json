@@ -21,7 +21,7 @@
   "module": "./dist/cli.js",
   "main": "./dist/cli.js",
   "bin": {
-    "temporal-mcp": "./dist/cli.js"
+    "temporal-mcp": "dist/cli.js"
   },
   "files": [
     "dist",
