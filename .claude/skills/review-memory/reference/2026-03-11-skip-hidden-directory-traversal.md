@@ -1,2 +1,0 @@
-- When replacing Bun `Glob` recursion with manual filesystem traversal, skip entries whose names start with `.` to preserve default hidden-path exclusion behavior.
-- Hidden-directory traversal parity matters in both document indexing and SDK marker discovery to avoid false positives and unnecessary I/O.
