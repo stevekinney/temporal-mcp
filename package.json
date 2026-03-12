@@ -1,24 +1,54 @@
 {
   "name": "temporal-mcp",
+  "version": "0.1.0",
+  "description": "Read-only MCP server for inspecting Temporal workflows, schedules, infrastructure, and documentation.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stevekinney/temporal-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stevekinney/temporal-mcp/issues"
+  },
+  "homepage": "https://github.com/stevekinney/temporal-mcp#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "temporal",
+    "cli",
+    "ai"
+  ],
   "module": "./dist/cli.js",
   "main": "./dist/cli.js",
   "bin": {
     "temporal-mcp": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "workspaces": ["packages/*"],
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "clean": "bun run scripts/clean.ts",
     "build:javascript": "bun run scripts/build-javascript.ts",
     "build:types": "bunx tsc -p packages/docs/tsconfig.types.json && bunx tsc -p packages/temporal/tsconfig.types.json && bunx tsc -p packages/server/tsconfig.types.json",
     "build": "bun run clean && bun run build:javascript && bun run build:types",
+    "prepack": "bun run build",
     "check": "bun run typecheck && bun run test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "bun test",
-    "test:coverage": "bun test --coverage"
+    "test:coverage": "bun test --coverage",
+    "release:patch": "npm version patch && git push --follow-tags",
+    "release:minor": "npm version minor && git push --follow-tags",
+    "release:major": "npm version major && git push --follow-tags"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -27,9 +57,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
+    "@types/bun": "latest",
     "typescript": "^5"
   }
 }
