@@ -1,6 +1,6 @@
-You’re building a “Temporal operator brain” that speaks MCP so an agent can:
+We’re building a “Temporal operator brain” that speaks MCP so an agent can:
 
-1. Consult a local Temporal docs corpus.
+1. Consult a local Temporal documentation corpus.
 2. Inspect and debug real workflow executions in self-hosted or Temporal Cloud.
 3. Perform mutations only when policy allows it.
 
@@ -10,14 +10,14 @@ Roadmap 2.0 turns this into a release-gated, spec-complete plan with explicit MC
 
 ## Locked Defaults
 
-- `v1 deployment`: local-first stdio.
+- `v1 deployment`: local-first `stdio`.
 - `implementation`: SDK-first with raw gRPC fallback.
 - `v1 scope`: read + safe-write GA.
 - `MCP depth`: include Tasks and Elicitation in v1, labeled experimental and version-gated.
 
 ## Release Gates
 
-- `R1 Foundation`: MCP compliance baseline + config/policy + docs + Temporal read-only core.
+- `R1 Foundation`: MCP compliance baseline + config/policy + docs + Temporal read-only core. (👈 We are here right now.)
 - `R2 GA`: safe-write operations + reliability hardening + packaging/docs/CI gates.
 - `R3 Post-GA High Risk`: destructive/admin + dual-confirm + escape hatches.
 - `R4 Remote Deployments`: Streamable HTTP with explicit auth mode decision (OAuth-compliant MCP auth OR internal/local-only mode).
