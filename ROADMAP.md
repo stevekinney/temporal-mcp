@@ -1744,7 +1744,7 @@ Critical path: `N1 -> N2 -> N3 -> N8 -> N11 -> N12 -> N13 -> N14`
 - [ ] Cancellation-aware handlers for long-running operations
 - [ ] Progress token support for operations exceeding host timeouts
 - [ ] Operator-grade reliability — deadlines/timeouts for all Temporal calls, cancellation propagation, TTL caches, memory guards, payload caps, progress updates every 2 seconds or less
-- [ ] Prompt templates — `temporal-triage`, `temporal-debug-workflow`, `temporal-docs-answer`, `temporal-safe-mutation`
+- [x] Prompt templates — `temporal-triage`, `temporal-debug-workflow`, `temporal-docs-answer`, `temporal-safe-mutation`
 - [ ] Completions — `completion/complete` for `ref/prompt` and `ref/resource`
 - [ ] Resource subscriptions for live monitoring — workflow, task queue, schedule with bounded polling
 - [ ] Packaging — `bin` entry (`bunx temporal-mcp`), `--config`, `--print-effective-config`, Dockerfile
