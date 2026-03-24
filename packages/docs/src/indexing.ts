@@ -52,6 +52,8 @@ export function createSearchIndex(chunks: DocChunk[]): MiniSearch {
 	return miniSearch;
 }
 
+const CURATED_SCORE_BOOST = 1.5;
+
 export function searchIndex(
 	index: MiniSearch,
 	query: string,
@@ -64,15 +66,19 @@ export function searchIndex(
 	});
 
 	const limit = options?.limit ?? 10;
-	return results.slice(0, limit).map((result) => ({
-		title: result.title,
-		headingPath: result.headingPath ? result.headingPath.split(' > ') : [],
-		sourcePath: result.sourcePath,
-		sdk: result.sdk ?? null,
-		section: result.section ?? null,
-		score: result.score,
-		excerpt: '', // MiniSearch doesn't store text by default; we'd need to reload
-	}));
+	return results.slice(0, limit).map((result) => {
+		const isCurated = typeof result.sourcePath === 'string' &&
+			result.sourcePath.startsWith('skill/');
+		return {
+			title: result.title,
+			headingPath: result.headingPath ? result.headingPath.split(' > ') : [],
+			sourcePath: result.sourcePath,
+			sdk: result.sdk ?? null,
+			section: result.section ?? null,
+			score: isCurated ? result.score * CURATED_SCORE_BOOST : result.score,
+			excerpt: '', // MiniSearch doesn't store text by default; we'd need to reload
+		};
+	});
 }
 
 export async function persistIndex(index: MiniSearch): Promise<void> {

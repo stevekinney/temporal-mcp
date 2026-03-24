@@ -31,6 +31,7 @@ export function createServer(options: CreateServerOptions): CreateServerResult {
 		{
 			capabilities: {
 				tools: { listChanged: true },
+				prompts: { listChanged: true },
 				logging: {},
 				...(config.mcp.capabilities.roots
 					? { roots: { listChanged: true } }

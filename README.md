@@ -1,18 +1,47 @@
 # Temporal MCP
 
-An MCP server that gives AI agents read-only access to your Temporal infrastructure.
+An MCP server that gives AI agents read-only access to your Temporal infrastructure — plus an Agent Skill that provides expert Temporal development guidance.
 
-The server exposes 28 tools across six categories—workflows, schedules, infrastructure, workers, connections, and documentation—along with 5 resource types, a built-in documentation search subsystem, and a policy engine that controls what agents are allowed to see. Temporal operations are read-only (no writes to Temporal state). The `docs.refresh` tool does have local side effects: it performs network `git` syncs and writes cache/index files under `~/.temporal-mcp`.
+The server exposes 28 tools across six categories—workflows, schedules, infrastructure, workers, connections, and documentation—along with 5 resource types, 4 prompt templates, a built-in documentation search subsystem, and a policy engine that controls what agents are allowed to see. Temporal operations are read-only (no writes to Temporal state). The `docs.refresh` tool does have local side effects: it performs network `git` syncs and writes cache/index files under `~/.temporal-mcp`.
+
+## Agent Skill
+
+`temporal-mcp` ships a spec-compliant [Agent Skill](https://agentskills.io/specification) at `skill/SKILL.md`. The skill is a curated knowledge package — markdown reference files covering Temporal architecture, determinism rules, workflow patterns, common gotchas, versioning strategies, troubleshooting decision trees, and language-specific guidance for TypeScript, Python, and Go.
+
+The skill and the MCP server solve complementary problems:
+- The **skill** teaches agents how to *write* correct Temporal code
+- The **MCP server** lets agents *observe* running infrastructure
+
+**Install the skill standalone** (no MCP server required):
+
+```bash
+# Claude Code / Claude Desktop (skills directory)
+cp -r skill/ ~/.claude/skills/temporal-mcp/
+```
+
+**Or use it via the MCP server** — the skill is included in the package. When both are active, tools like `temporal.workflow.describe` return a `guidance` field pointing to the relevant reference file when the workflow is in a notable state (failed, timed out, etc.), and `docs.search` searches both the Temporal docs corpus and the curated references.
 
 ## Features
 
 - **28 read-only tools** for inspecting workflows, schedules, task queues, namespaces, workers, and cluster state
 - **5 MCP resource types** for direct access to Temporal entities via URI templates
-- **Documentation subsystem** that indexes and searches the Temporal docs corpus locally
+- **4 prompt templates** (`temporal-debug-workflow`, `temporal-triage`, `temporal-docs-answer`, `temporal-safe-mutation`) that combine live cluster data with curated guidance
+- **Agent Skill** at `skill/SKILL.md` with 22 curated reference files for TypeScript, Python, and Go development
+- **Documentation subsystem** that indexes and searches the Temporal docs corpus plus curated references locally
 - **Multi-profile connections** to multiple Temporal clusters (self-hosted and Cloud) from one server
 - **Policy engine** with four modes, glob-based tool filtering, and profile/namespace allowlists
 - **Audit logging** with structured JSON to `stderr` and automatic sensitive field redaction
 - **Zero Temporal write operations** by design—no starts, signals, cancels, terminates, or deletes
+
+## Using Both Together
+
+When the MCP server is connected to a Temporal cluster and the skill is loaded into the agent's context, the two capabilities reinforce each other:
+
+- **`temporal.workflow.describe`** on a timed-out or failed workflow returns a `guidance` field: `"See skill/references/core/gotchas.md for common timeout causes..."`. The agent can then load that reference file to understand the failure and how to fix the code.
+- **`temporal.workflow.history.summarize`** detecting workflow task failures (often non-determinism errors) returns guidance pointing to `skill/references/core/determinism.md` and `skill/references/core/versioning.md`.
+- **`docs.search`** searches both the Temporal documentation corpus and the curated reference files, with curated results ranked higher (they're more information-dense).
+- **`docs.get`** can retrieve curated reference files directly: `docs.get({ sourcePath: "skill/references/core/determinism.md" })`.
+- **Prompt templates** (`temporal-debug-workflow`, `temporal-triage`) orchestrate multi-step diagnostic workflows that interleave MCP tool calls with curated knowledge lookups.
 
 ## Prerequisites
 

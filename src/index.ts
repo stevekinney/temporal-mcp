@@ -4,6 +4,7 @@ import { loadConfiguration } from '../packages/server/src/config/load.ts';
 import { TemporalConnectionManager } from '../packages/temporal/src/connection.ts';
 import { registerAllTools } from '../packages/server/src/tools/register-all.ts';
 import { registerAllResources } from '../packages/server/src/resources/register.ts';
+import { registerAllPrompts } from '../packages/server/src/prompts/register-prompts.ts';
 import { AuditLogger } from '../packages/server/src/safety/audit-log.ts';
 import { RootsDiscovery } from '../packages/server/src/roots/discovery.ts';
 
@@ -18,6 +19,7 @@ async function main() {
 
 	registerAllTools({ server, connectionManager, config, auditLogger, taskStore });
 	registerAllResources({ server, connectionManager, config, auditLogger });
+	registerAllPrompts(server);
 
 	const transport = new StdioServerTransport();
 	await server.connect(transport);

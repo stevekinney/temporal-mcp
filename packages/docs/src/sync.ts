@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { mkdir, access, readFile, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -14,6 +15,13 @@ export interface SyncMetadata {
 
 export function getCorpusPath(homeDirectory: string = homedir()): string {
 	return join(homeDirectory, '.temporal-mcp', 'docs-corpus');
+}
+
+export function getSkillReferencesPath(): string {
+	// Resolve relative to this source file: packages/docs/src/sync.ts → ../../.. → repo root → skill/references
+	const thisFile = fileURLToPath(import.meta.url);
+	// Walk up: src → docs → packages → repo root
+	return join(thisFile, '..', '..', '..', '..', '..', 'skill', 'references');
 }
 
 export function getSyncMetaPath(homeDirectory: string = homedir()): string {

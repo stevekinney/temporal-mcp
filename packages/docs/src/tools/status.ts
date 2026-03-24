@@ -1,7 +1,8 @@
-import { getSyncMetadata } from '../sync.ts';
+import { getSyncMetadata, getSkillReferencesPath } from '../sync.ts';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, access } from 'node:fs/promises';
+import { constants } from 'node:fs';
 
 export interface DocsStatus {
 	synced: boolean;
@@ -9,11 +10,16 @@ export interface DocsStatus {
 	lastSyncTime: string | null;
 	documentCount: number;
 	sdkFilter: string[];
+	curatedReferences: {
+		present: boolean;
+		fileCount: number;
+	};
 }
 
 interface DocsStatusMetadata {
 	documentCount: number;
 	sdkFilter: string[];
+	curatedReferenceCount: number;
 }
 
 function getStatusMetadataPath(homeDirectory: string = homedir()): string {
@@ -35,8 +41,9 @@ export async function persistDocsStatusMetadata(
 	documentCount: number,
 	sdkFilter: string[],
 	homeDirectory: string = homedir(),
+	curatedReferenceCount: number = 0,
 ): Promise<void> {
-	const metadata: DocsStatusMetadata = { documentCount, sdkFilter };
+	const metadata: DocsStatusMetadata = { documentCount, sdkFilter, curatedReferenceCount };
 	await mkdir(join(homeDirectory, '.temporal-mcp', 'cache'), {
 		recursive: true,
 	});
@@ -45,6 +52,15 @@ export async function persistDocsStatusMetadata(
 		JSON.stringify(metadata, null, 2),
 		'utf8',
 	);
+}
+
+async function skillReferencesPresent(): Promise<boolean> {
+	try {
+		await access(getSkillReferencesPath(), constants.F_OK);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 export async function getDocsStatus(
@@ -58,11 +74,17 @@ export async function getDocsStatus(
 			? await loadDocsStatusMetadata(homeDirectory)
 			: null;
 
+	const curatedPresent = await skillReferencesPresent();
+
 	return {
 		synced: meta !== null,
 		commitSha: meta?.commitSha ?? null,
 		lastSyncTime: meta?.lastSyncTime ?? null,
 		documentCount: documentCount ?? persistedMetadata?.documentCount ?? 0,
 		sdkFilter: sdkFilter ?? persistedMetadata?.sdkFilter ?? [],
+		curatedReferences: {
+			present: curatedPresent,
+			fileCount: persistedMetadata?.curatedReferenceCount ?? 0,
+		},
 	};
 }

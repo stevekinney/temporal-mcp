@@ -7,6 +7,7 @@ import { redactSensitiveFields } from '../safety/redaction.ts';
 import { resolveTemporalPolicyScope } from './policy-context.ts';
 import { requireToolContract } from './tool-contract.ts';
 import { inputSchema } from './zod-compat.ts';
+import { annotateWithGuidance } from '../guidance/annotate.ts';
 
 type WorkflowPolicyGateResult =
 	| {
@@ -174,7 +175,11 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 				);
 				const client = await connectionManager.getClient(gate.policyScope.profile);
 				const description = await describeWorkflow(client, { workflowId, runId });
-				const result = successResponse(redactSensitiveFields(description));
+				const annotated = annotateWithGuidance(
+					'temporal.workflow.describe',
+					redactSensitiveFields(description),
+				);
+				const result = successResponse(annotated);
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 				} catch (error) {
@@ -597,7 +602,11 @@ export function registerWorkflowTools(context: ToolRegistrationContext): void {
 					}>;
 				};
 				const summary = summarizeWorkflowHistory(history.events);
-				const result = successResponse(redactSensitiveFields(summary));
+				const annotatedSummary = annotateWithGuidance(
+					'temporal.workflow.history.summarize',
+					redactSensitiveFields(summary),
+				);
+				const result = successResponse(annotatedSummary);
 				auditLogger.logToolResult(requestContext, 'success', Date.now() - startTime);
 				return result;
 				} catch (error) {
