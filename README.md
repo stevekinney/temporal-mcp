@@ -216,12 +216,27 @@ Any MCP client that supports `stdio` transport can launch the server. Point it a
 
 ### Documentation
 
-| Tool           | Description                                                   | Stability |
-| -------------- | ------------------------------------------------------------- | --------- |
-| `docs.status`  | Check the status of the local documentation corpus            | stable    |
-| `docs.search`  | Search the Temporal documentation corpus                      | stable    |
-| `docs.get`     | Get the full content of a specific documentation page         | stable    |
-| `docs.refresh` | Refresh the local docs corpus by syncing with the latest docs | stable    |
+| Tool           | Description                                                                  | Stability |
+| -------------- | ---------------------------------------------------------------------------- | --------- |
+| `docs.status`  | Check the status of the local documentation corpus and curated references    | stable    |
+| `docs.search`  | Search the Temporal docs corpus and curated skill references                 | stable    |
+| `docs.get`     | Get a documentation page or curated reference (`skill/references/core/...`) | stable    |
+| `docs.refresh` | Refresh the local docs corpus and re-index curated references                | stable    |
+
+`docs.search` boosts curated reference results 1.5× over raw docs corpus results. `docs.get` accepts paths in the form `skill/references/{category}/{file}.md` to retrieve curated reference files directly.
+
+## Prompts
+
+Four prompt templates are registered and discoverable by any MCP client that supports the prompts capability:
+
+| Prompt                      | Arguments                                   | Purpose                                                                                    |
+| --------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `temporal-debug-workflow`   | `workflowId`, `namespace?`, `profile?`      | Step-by-step workflow diagnosis combining live state, event history, and reference lookups |
+| `temporal-triage`           | `namespace`, `taskQueue?`, `profile?`       | Namespace health check: recent failures, worker connectivity, and task queue backlogs      |
+| `temporal-docs-answer`      | `question`, `sdk?`                          | Answer a Temporal question using the docs corpus and curated references                    |
+| `temporal-safe-mutation`    | `workflowId`, `signalName`, `namespace?`, `profile?` | Pre-flight state checks before sending a signal to a running workflow               |
+
+Each prompt instructs the agent to call the relevant MCP tools, load the appropriate curated reference files, and produce a structured output. They're designed to be used directly from any MCP client prompt picker.
 
 ## Resources
 
@@ -319,10 +334,20 @@ This server is intentionally limited to observation. It does not:
 ```
 src/
   index.ts                  # Entry point
+skill/
+  SKILL.md                  # Agent Skills spec entry point
+  references/
+    core/                   # Language-agnostic reference files (determinism, patterns, etc.)
+    typescript/             # TypeScript SDK reference files
+    python/                 # Python SDK reference files
+    go/                     # Go SDK reference files
 packages/
   server/                   # MCP server, config, policy, tools, resources, safety
+    src/
+      guidance/             # Guidance annotation patterns and post-processing
+      prompts/              # MCP prompt template registration
   temporal/                 # Temporal client, gRPC calls, capability matrix
-  docs/                     # Documentation indexing and search
+  docs/                     # Documentation indexing and search (corpus + curated refs)
 ```
 
 ## Maintainer release workflow
