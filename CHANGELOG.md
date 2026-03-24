@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] — 2026-03-24
+
+### Added
+
+- **Schedules reference** — new `skill/references/core/schedules.md` covering schedule creation, specs (cron, interval, calendar), overlap policies, pause/unpause, backfill, and common gotchas (timezone handling, catchup windows, workflow ID conflicts). All three SDKs (TypeScript, Python, Go) are covered with code examples.
+
+### Changed
+
+- **Front-loaded critical rules** — the SKILL.md body now contains a "Rules That Prevent the Most Bugs" section with 10 NEVER/ALWAYS rules covering the highest-impact Temporal mistakes (`time.sleep` in workflows, missing timeouts, unguarded versioning, swallowed cancellations, etc.). These are read before any reference files load.
+- **Problem-to-reference routing table** — replaced the vague "load relevant references as the conversation requires" with an explicit table mapping 8 problem categories to specific reference files.
+- **Language detection hints** — the skill now tells the agent to check `package.json` for `@temporalio/*`, `pyproject.toml`/`requirements.txt` for `temporalio`, and `go.mod` for `go.temporal.io` rather than just saying "detect the language."
+- **Scope declaration** — new section explicitly names Java, .NET, Ruby, and PHP as unsupported SDKs, and lists Nexus and Temporal Cloud management as out of scope. The agent now warns the user instead of silently degrading.
+- **Condensed architecture section** — replaced the 20-line ASCII diagram and conceptual re-explanation with a 3-line description of how temporal-mcp connects to the cluster. The diagram re-explained concepts the model already knows; the replacement keeps only the novel information.
+- **Trigger description narrowed** — removed the generic "durable execution" trigger phrase that could match non-Temporal tools (Azure Durable Functions, Restate, Inngest).
+
+---
+
 ## [0.2.0] — 2026-03-23
 
 ### Added
@@ -54,6 +71,7 @@ Initial public release.
 - **Audit logging** — every tool invocation logged as structured JSON to stderr with request ID tracking and automatic sensitive-field redaction.
 - **stdio transport** — server communicates over standard I/O for compatibility with Claude Desktop, Claude Code, and any MCP client that supports the stdio transport.
 
+[0.2.1]: https://github.com/stevekinney/temporal-mcp/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/stevekinney/temporal-mcp/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/stevekinney/temporal-mcp/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/stevekinney/temporal-mcp/releases/tag/v0.1.0

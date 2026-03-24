@@ -7,7 +7,7 @@ description: >
   non-determinism error", "workflow replay", "activity timeout", "signal
   workflow", "query workflow", "worker not starting", "activity keeps
   retrying", "Temporal heartbeat", "continue-as-new", "child workflow",
-  "saga pattern", "workflow versioning", "durable execution", "inspect
+  "saga pattern", "workflow versioning", "inspect
   workflow history", "check task queue", "describe namespace", "list
   schedules", "worker deployment", "Temporal Cloud", "temporal CLI",
   or mentions Temporal SDK development or Temporal cluster operations.
@@ -23,27 +23,9 @@ This skill provides curated Temporal development knowledge through a set of refe
 
 ---
 
-## Core Architecture
+## How temporal-mcp Fits
 
-```
-┌─────────────────────────────────┐
-│         Temporal Cluster        │
-│  Frontend · History · Matching  │
-└──────────────┬──────────────────┘
-               │ Task Queues
-         ┌─────▼──────┐
-         │   Workers  │
-         │ Workflows  │
-         │ Activities │
-         └────────────┘
-               ▲
-    ┌──────────┴──────────┐
-    │  temporal-mcp (MCP) │
-    │   read-only observer│
-    └─────────────────────┘
-```
-
-The Temporal Cluster persists event history and schedules tasks onto named Task Queues. Workers long-poll those queues to pick up Workflow Tasks and Activity Tasks, then execute the corresponding workflow function or activity function. The `temporal-mcp` MCP server connects to the cluster's Frontend service via gRPC and exposes inspection tools — it observes but never mutates workflow state (with the exception of triggering schedules, which is a limited write operation).
+The `temporal-mcp` MCP server connects to the Temporal cluster's Frontend gRPC service as a read-only observer. It can inspect workflows, task queues, schedules, namespaces, and worker deployments, but it never starts, signals, cancels, or terminates workflows (the one exception: triggering an already-configured schedule). All mutation happens through your application's Temporal client and workers.
 
 ---
 
@@ -53,17 +35,49 @@ Temporal rebuilds workflow state by re-executing the workflow function against i
 
 ---
 
+## Rules That Prevent the Most Bugs
+
+These rules apply to ALL code inside a workflow function. Violating any of them causes non-determinism errors that crash running workflows.
+
+- NEVER use `Date.now()`, `datetime.now()`, or `time.Now()` in workflow code. Use `workflow.currentTimeMillis()` (TypeScript), `workflow.now()` (Python), or `workflow.Now(ctx)` (Go).
+- NEVER use `Math.random()`, `random.random()`, or `rand` in workflow code. Use the SDK's `workflow.random()` equivalent.
+- NEVER use `setTimeout` / `time.sleep()` / `asyncio.sleep()` in workflow code. Use `workflow.sleep()` (TypeScript/Python) or `workflow.Sleep(ctx, duration)` (Go).
+- NEVER make network calls, read files, or access databases directly in workflow code. Put all I/O in activities.
+- NEVER iterate Go maps in workflow code without sorting keys first. Map iteration order is randomized.
+- NEVER use `go func()` in workflow code. Use `workflow.Go(ctx, func(...))`.
+- NEVER catch and swallow `CancelledError` / `CancelledFailure`. Always re-throw cancellation errors or the replay command sequence will diverge.
+- NEVER deploy changed workflow code without a `patched()` / `GetVersion` guard if workflows are still running with the old code. Changed code + old history = non-determinism crash. Read `references/core/versioning.md` BEFORE modifying any workflow that has running executions.
+- NEVER omit both `scheduleToCloseTimeout` and `startToCloseTimeout` on an activity. Activities retry forever by default — without a timeout, a permanently failing activity blocks the workflow indefinitely.
+- NEVER skip `heartbeat()` calls in activities running longer than 30 seconds. Without heartbeats, Temporal cannot detect a stuck or crashed activity until the full `startToCloseTimeout` expires.
+
+See `references/core/determinism.md` and `references/core/gotchas.md` for detailed explanations and code examples.
+
+---
+
 ## Getting Started
 
 ### For Development
 
-Detect the user's language, then load the appropriate getting-started reference first:
+Detect the user's SDK by inspecting project files:
 
-- TypeScript → `references/typescript/typescript.md`
-- Python → `references/python/python.md`
-- Go → `references/go/go.md`
+- **TypeScript**: `package.json` contains a dependency starting with `@temporalio/` → load `references/typescript/typescript.md`
+- **Python**: `requirements.txt` or `pyproject.toml` contains `temporalio` → load `references/python/python.md`
+- **Go**: `go.mod` contains `go.temporal.io` → load `references/go/go.md`
 
-Then load relevant `references/core/` files as the conversation requires (determinism, patterns, gotchas, versioning, troubleshooting, error-reference, operational-patterns).
+If the language is ambiguous, ask the user.
+
+Then load core references based on the problem:
+
+| Problem | Load |
+|---------|------|
+| Writing new workflow or activity code | `references/core/patterns.md` + `references/{language}/patterns.md` |
+| Debugging non-determinism or replay errors | `references/core/determinism.md` + `references/{language}/versioning.md` |
+| Activity retrying, timing out, or stuck | `references/core/gotchas.md` |
+| Understanding an error message | `references/core/error-reference.md` |
+| Workflow stuck, failed, or timed out | `references/core/troubleshooting.md` |
+| Reading MCP tool output or cluster state | `references/core/operational-patterns.md` |
+| Deploying changed code to production | `references/core/versioning.md` + `references/{language}/versioning.md` |
+| Creating or debugging schedules | `references/core/schedules.md` |
 
 ### For Operations
 
@@ -74,6 +88,22 @@ npx -y temporal-mcp
 ```
 
 It connects to your Temporal cluster (defaults to `localhost:7233`) and exposes 28 read-only tools for live inspection. Configure the connection via environment variables or a `~/.temporal-mcp.json` profile file. See **MCP Tools Available** below for the full tool inventory.
+
+---
+
+## Scope
+
+This skill provides reference files and code examples for three Temporal SDKs:
+
+- **TypeScript** (`@temporalio/*` packages)
+- **Python** (`temporalio` package)
+- **Go** (`go.temporal.io/sdk`)
+
+The following Temporal SDKs exist but are **not covered** by this skill's reference files: **Java**, **.NET**, **Ruby**, **PHP**. If the user is working with one of these SDKs, state clearly that this skill does not have language-specific guidance for their SDK and suggest consulting the official Temporal documentation at https://docs.temporal.io.
+
+The core concepts (determinism, replay, versioning strategies, error taxonomy) apply to all Temporal SDKs regardless of language. The MCP cluster-inspection tools also work regardless of SDK language.
+
+**Not covered**: Temporal Cloud account management, billing, namespace provisioning via the Temporal Cloud UI/API, Nexus (cross-namespace service orchestration), and Temporal Web UI configuration.
 
 ---
 
@@ -88,6 +118,7 @@ It connects to your Temporal cluster (defaults to `localhost:7233`) and exposes 
 | `references/core/troubleshooting.md` | Diagnostic decision trees for stuck/failed workflows |
 | `references/core/error-reference.md` | Error taxonomy: ApplicationFailure, CancelledFailure, TimeoutFailure, etc. |
 | `references/core/operational-patterns.md` | Reading event histories, cluster health indicators, correlating tool output with code |
+| `references/core/schedules.md` | Creating and configuring schedules: specs, overlap policies, backfill |
 | `references/typescript/typescript.md` | TypeScript SDK setup, project structure, worker bootstrap |
 | `references/typescript/determinism.md` | TypeScript-specific determinism hazards (Promise ordering, date-fns, etc.) |
 | `references/typescript/patterns.md` | TypeScript workflow/activity implementation patterns |
