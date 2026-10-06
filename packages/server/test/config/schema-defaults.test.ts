@@ -40,6 +40,7 @@ describe('config defaults', () => {
       confirmTokenTtlSec: 600,
       maxTaskTtlSec: 3600,
       codecAllowlist: [],
+      codecTimeoutMs: 5000,
       idempotencyWindowSec: 600,
     });
   });

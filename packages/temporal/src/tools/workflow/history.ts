@@ -1,6 +1,10 @@
 import type { Client } from '@temporalio/client';
 import { getWorkflowExecutionHistoryReverse } from '../../grpc.ts';
 import type { WorkflowHistoryResult } from '../../grpc.ts';
+import {
+	decodeHistoryPayloads,
+	getClientPayloadCodecs,
+} from '../../history-payloads.ts';
 
 export interface WorkflowHistoryInput {
 	workflowId: string;
@@ -10,15 +14,20 @@ export interface WorkflowHistoryInput {
 export async function getWorkflowHistory(client: Client, input: WorkflowHistoryInput): Promise<unknown> {
 	const handle = client.workflow.getHandle(input.workflowId, input.runId);
 	const history = await handle.fetchHistory();
+	const events =
+		history.events?.map((event: any) => ({
+			eventId: String(event.eventId),
+			eventType: event.eventType,
+			eventTime: event.eventTime?.toISOString?.() ?? null,
+			taskId: String(event.taskId ?? ''),
+			attributes: extractAttributes(event),
+		})) ?? [];
+
 	return {
-		events:
-			history.events?.map((event: any) => ({
-				eventId: String(event.eventId),
-				eventType: event.eventType,
-				eventTime: event.eventTime?.toISOString?.() ?? null,
-				taskId: String(event.taskId ?? ''),
-				attributes: extractAttributes(event),
-			})) ?? [],
+		events: await decodeHistoryPayloads(
+			events,
+			getClientPayloadCodecs(client),
+		),
 	};
 }
 

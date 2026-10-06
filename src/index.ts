@@ -13,7 +13,10 @@ async function main() {
 
 	const config = await loadConfiguration();
 
-	const connectionManager = new TemporalConnectionManager(config.temporal);
+	const connectionManager = new TemporalConnectionManager(
+		config.temporal,
+		config.security,
+	);
 	const { server, taskStore } = createServer({ config });
 	const auditLogger = new AuditLogger();
 

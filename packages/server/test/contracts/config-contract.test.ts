@@ -34,6 +34,7 @@ describe('config contract types', () => {
             kind: 'self-hosted',
             address: 'localhost:7233',
             namespace: 'default',
+            codecEndpoint: 'https://codec.example.com',
           },
         },
       },
@@ -41,6 +42,7 @@ describe('config contract types', () => {
         confirmTokenTtlSec: 600,
         maxTaskTtlSec: 3600,
         codecAllowlist: ['https://codec.internal.example'],
+        codecTimeoutMs: 5000,
         idempotencyWindowSec: 600,
       },
       policy: {
@@ -59,5 +61,6 @@ describe('config contract types', () => {
     expect(devProfile?.kind).toBe('self-hosted');
     expect(config.mcp.capabilities.completions).toBeTrue();
     expect(config.security.codecAllowlist.length).toBe(1);
+    expect(devProfile?.codecEndpoint).toBe('https://codec.example.com');
   });
 });

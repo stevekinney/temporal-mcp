@@ -30,6 +30,7 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   confirmTokenTtlSec: 600,
   maxTaskTtlSec: 3600,
   codecAllowlist: [],
+  codecTimeoutMs: 5000,
   idempotencyWindowSec: 600,
 };
 

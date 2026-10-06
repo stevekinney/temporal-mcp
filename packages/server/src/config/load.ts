@@ -9,6 +9,7 @@ const profileConfigSchema = z.object({
 	kind: z.enum(['self-hosted', 'cloud']),
 	address: z.string(),
 	namespace: z.string(),
+	codecEndpoint: z.string().optional(),
 });
 
 const appConfigSchema = z.object({
@@ -51,6 +52,7 @@ const appConfigSchema = z.object({
 			confirmTokenTtlSec: z.number(),
 			maxTaskTtlSec: z.number(),
 			codecAllowlist: z.array(z.string()),
+			codecTimeoutMs: z.number(),
 			idempotencyWindowSec: z.number(),
 		})
 		.partial()

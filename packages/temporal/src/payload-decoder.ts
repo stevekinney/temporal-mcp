@@ -1,96 +1,14 @@
-import { isIP } from 'node:net';
+import {
+	DEFAULT_CODEC_TIMEOUT_MS,
+	codecEndpointBlockedReason,
+	postToCodecEndpoint,
+} from './codec-endpoint.ts';
 
 export interface DecodedPayload {
 	decoded: boolean;
 	data?: unknown;
 	encoding?: string;
 	reason?: string;
-}
-
-const PRIVATE_IPV4_RANGES = [
-	/^10\./,
-	/^172\.(1[6-9]|2\d|3[01])\./,
-	/^192\.168\./,
-	/^127\./,
-	/^0\./,
-	/^169\.254\./,
-];
-
-const PRIVATE_IPV6_RANGES = [
-	/^::1$/i,
-	/^fc[0-9a-f]{2}:/i,
-	/^fd[0-9a-f]{2}:/i,
-	/^fe80:/i,
-];
-
-const PRIVATE_HOSTNAMES = [
-	/^localhost$/i,
-];
-
-function stripIPv6Brackets(hostname: string): string {
-	if (hostname.startsWith('[') && hostname.endsWith(']')) {
-		return hostname.slice(1, -1);
-	}
-	return hostname;
-}
-
-function decodeIPv6MappedIPv4(ipv6: string): string | null {
-	const mappedPrefix = '::ffff:';
-	if (!ipv6.toLowerCase().startsWith(mappedPrefix)) {
-		return null;
-	}
-
-	const mappedPart = ipv6.slice(mappedPrefix.length);
-	if (mappedPart.includes('.')) {
-		return mappedPart;
-	}
-
-	const match = mappedPart.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
-	if (!match) {
-		return null;
-	}
-
-	const left = Number.parseInt(match[1]!, 16);
-	const right = Number.parseInt(match[2]!, 16);
-	const octets = [
-		(left >> 8) & 0xff,
-		left & 0xff,
-		(right >> 8) & 0xff,
-		right & 0xff,
-	];
-	return octets.join('.');
-}
-
-function isPrivateAddress(url: string): boolean {
-	try {
-		const parsed = new URL(url);
-		const hostname = stripIPv6Brackets(parsed.hostname);
-		if (PRIVATE_HOSTNAMES.some((pattern) => pattern.test(hostname))) {
-			return true;
-		}
-
-		const ipVersion = isIP(hostname);
-		if (ipVersion === 4) {
-			return PRIVATE_IPV4_RANGES.some((pattern) =>
-				pattern.test(hostname),
-			);
-		}
-		if (ipVersion === 6) {
-			const mappedIPv4 = decodeIPv6MappedIPv4(hostname);
-			if (mappedIPv4) {
-				return PRIVATE_IPV4_RANGES.some((pattern) =>
-					pattern.test(mappedIPv4),
-				);
-			}
-			return PRIVATE_IPV6_RANGES.some((pattern) =>
-				pattern.test(hostname),
-			);
-		}
-
-		return false;
-	} catch {
-		return true; // Treat unparseable URLs as private
-	}
 }
 
 export class PayloadDecoder {
@@ -105,7 +23,7 @@ export class PayloadDecoder {
 	}) {
 		this.codecEndpoint = options?.codecEndpoint;
 		this.codecAllowlist = options?.codecAllowlist ?? [];
-		this.codecTimeoutMs = options?.codecTimeoutMs ?? 5000;
+		this.codecTimeoutMs = options?.codecTimeoutMs ?? DEFAULT_CODEC_TIMEOUT_MS;
 	}
 
 	async decode(payloads: unknown[]): Promise<DecodedPayload[]> {
@@ -186,47 +104,35 @@ export class PayloadDecoder {
 			return { decoded: false, reason: 'No codec endpoint' };
 		}
 
-		// SSRF protection
-		if (
-			isPrivateAddress(this.codecEndpoint) &&
-			!this.codecAllowlist.includes(this.codecEndpoint)
-		) {
-			return {
-				decoded: false,
-				reason: 'Codec endpoint is a private address and not in the allowlist',
-			};
+		const blocked = codecEndpointBlockedReason(
+			this.codecEndpoint,
+			this.codecAllowlist,
+		);
+		if (blocked) {
+			return { decoded: false, reason: blocked };
 		}
 
-		const controller = new AbortController();
-		const timeout = setTimeout(
-			() => controller.abort(),
+		const response = await postToCodecEndpoint(
+			this.codecEndpoint,
+			{ payloads: [payload] },
 			this.codecTimeoutMs,
 		);
 
-		try {
-			const response = await fetch(this.codecEndpoint, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ payloads: [payload] }),
-				signal: controller.signal,
-			});
-
-			if (!response.ok) {
-				return {
-					decoded: false,
-					reason: `Codec returned ${response.status}`,
-				};
-			}
-
-			const result = await response.json();
-			const decoded = (result as any).payloads?.[0];
-			if (decoded !== undefined) {
-				return { decoded: true, data: decoded };
-			}
-			return { decoded: false, reason: 'Codec returned empty result' };
-		} finally {
-			clearTimeout(timeout);
+		if (!response.ok) {
+			return {
+				decoded: false,
+				reason: `Codec returned ${response.status}`,
+			};
 		}
+
+		const result = (await response.json()) as {
+			payloads?: unknown[];
+		};
+		const decoded = result.payloads?.[0];
+		if (decoded !== undefined) {
+			return { decoded: true, data: decoded };
+		}
+		return { decoded: false, reason: 'Codec returned empty result' };
 	}
 
 	private getEncoding(payload: unknown): string {

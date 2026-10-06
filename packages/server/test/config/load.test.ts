@@ -83,7 +83,49 @@ describe('loadConfiguration', () => {
 		// other security fields should retain defaults
 		expect(config.security.maxTaskTtlSec).toBe(3600);
 		expect(config.security.codecAllowlist).toEqual([]);
+		expect(config.security.codecTimeoutMs).toBe(5000);
 		expect(config.security.idempotencyWindowSec).toBe(600);
+	});
+
+	test('loads a per-profile codec endpoint and the codec timeout', async () => {
+		const configPath = join(tmpdir(), `temporal-mcp-test-${Date.now()}.json`);
+		await Bun.write(
+			configPath,
+			JSON.stringify({
+				temporal: {
+					defaultProfile: 'encrypted',
+					profiles: {
+						encrypted: {
+							kind: 'self-hosted',
+							address: 'temporal.example.com:7233',
+							namespace: 'default',
+							codecEndpoint: 'https://codec.example.com',
+						},
+						plain: {
+							kind: 'self-hosted',
+							address: 'localhost:7233',
+							namespace: 'default',
+						},
+					},
+				},
+				security: {
+					codecTimeoutMs: 1500,
+					codecAllowlist: ['http://localhost:8080'],
+				},
+			}),
+		);
+
+		process.env.TEMPORAL_MCP_CONFIG = configPath;
+		const config = await loadConfiguration();
+
+		expect(config.temporal.profiles.encrypted?.codecEndpoint).toBe(
+			'https://codec.example.com',
+		);
+		expect(config.temporal.profiles.plain?.codecEndpoint).toBeUndefined();
+		expect(config.security.codecTimeoutMs).toBe(1500);
+		expect(config.security.codecAllowlist).toEqual([
+			'http://localhost:8080',
+		]);
 	});
 
 	test('rejects invalid config and falls back to defaults', async () => {

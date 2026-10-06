@@ -1,16 +1,42 @@
 import { Client, Connection } from '@temporalio/client';
+import type { DataConverter } from '@temporalio/common';
 import type {
+	SecurityConfig,
 	TemporalConfig,
 	TemporalProfileConfig,
 } from '../../server/src/contracts/config.ts';
 import type { ErrorEnvelope } from '../../server/src/contracts/error-envelope.ts';
+import { RemotePayloadCodec } from './payload-codec.ts';
+
+export type CodecSecurityConfig = Partial<
+	Pick<SecurityConfig, 'codecAllowlist' | 'codecTimeoutMs'>
+>;
+
+export function createCodecDataConverter(
+	profile: TemporalProfileConfig,
+	security: CodecSecurityConfig = {},
+): DataConverter | undefined {
+	if (!profile.codecEndpoint) return undefined;
+
+	return {
+		payloadCodecs: [
+			new RemotePayloadCodec({
+				endpoint: profile.codecEndpoint,
+				codecAllowlist: security.codecAllowlist,
+				codecTimeoutMs: security.codecTimeoutMs,
+			}),
+		],
+	};
+}
 
 export class TemporalConnectionManager {
 	private clients = new Map<string, Client>();
 	private config: TemporalConfig;
+	private security: CodecSecurityConfig;
 
-	constructor(config: TemporalConfig) {
+	constructor(config: TemporalConfig, security: CodecSecurityConfig = {}) {
 		this.config = config;
+		this.security = security;
 	}
 
 	resolveProfileName(profileName?: string): string {
@@ -67,7 +93,11 @@ export class TemporalConnectionManager {
 		}
 
 		const connection = await Connection.connect(connectionOptions);
-		return new Client({ connection, namespace: profile.namespace });
+		return new Client({
+			connection,
+			namespace: profile.namespace,
+			dataConverter: createCodecDataConverter(profile, this.security),
+		});
 	}
 
 	private createError(code: string, message: string): ErrorEnvelope {

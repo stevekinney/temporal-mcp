@@ -136,6 +136,43 @@ For Cloud connections, set the `TEMPORAL_API_KEY` environment variable with your
 
 Every tool accepts an optional `profile` parameter. When omitted, the server uses `defaultProfile`. When provided, it connects to that specific profile's cluster.
 
+### Encrypted payloads
+
+Clusters that use client-side encryption store payloads the default converter cannot read. Point a profile at a [remote codec server](https://docs.temporal.io/production-deployment/data-encryption) and the server will decode payloads through it:
+
+```json
+{
+  "temporal": {
+    "defaultProfile": "production",
+    "profiles": {
+      "production": {
+        "kind": "cloud",
+        "address": "my-namespace.tmprl.cloud:7233",
+        "namespace": "my-namespace",
+        "codecEndpoint": "https://codec.example.com"
+      }
+    }
+  },
+  "security": {
+    "codecTimeoutMs": 5000,
+    "codecAllowlist": []
+  }
+}
+```
+
+`codecEndpoint` is the base URL of the codec server. The server posts to `{codecEndpoint}/encode` and `{codecEndpoint}/decode` with the `{"payloads": [...]}` protobuf-JSON body Temporal's own tooling uses. Each profile configures its own endpoint, so clusters with different codec servers can coexist.
+
+With an endpoint configured, payloads decode everywhere the server reads them: `temporal.workflow.result`, `temporal.workflow.query`, the workflow and schedule `describe`/`list` tools (memo and search attributes), and both history tools. Payloads the codec cannot turn into JSON are returned as `{"decoded": false, "encoding": "...", "reason": "..."}` rather than dropped.
+
+Two security settings govern the outbound call:
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `security.codecAllowlist` | `[]` | Codec endpoints on private networks that are permitted anyway. Entries are matched against `codecEndpoint` exactly. |
+| `security.codecTimeoutMs` | `5000` | Timeout for each codec request. |
+
+Codec endpoints that resolve to a private address — `localhost`, loopback, link-local, and the RFC 1918 ranges, including their IPv6 and IPv6-mapped-IPv4 forms — are refused unless listed in `security.codecAllowlist`. This blocks a config file from turning the server into an SSRF probe of its own network.
+
 ## Connecting to an MCP client
 
 ### Claude Desktop

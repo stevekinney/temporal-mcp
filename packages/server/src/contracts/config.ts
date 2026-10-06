@@ -30,6 +30,7 @@ export interface SecurityConfig {
   confirmTokenTtlSec: number;
   maxTaskTtlSec: number;
   codecAllowlist: string[];
+  codecTimeoutMs: number;
   idempotencyWindowSec: number;
 }
 
@@ -37,6 +38,11 @@ export interface TemporalProfileConfig {
   kind: ProfileKind;
   address: string;
   namespace: string;
+  /**
+   * Base URL of a remote codec server for client-side-encrypted payloads. The
+   * server posts to `${codecEndpoint}/encode` and `${codecEndpoint}/decode`.
+   */
+  codecEndpoint?: string;
 }
 
 export interface TemporalConfig {

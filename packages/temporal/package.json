@@ -16,6 +16,7 @@
     }
   },
   "dependencies": {
-    "@temporalio/client": "^1.15.0"
+    "@temporalio/client": "^1.15.0",
+    "@temporalio/common": "^1.15.0"
   }
 }

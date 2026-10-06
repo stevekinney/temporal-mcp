@@ -1,4 +1,8 @@
 import type { Client } from '@temporalio/client';
+import {
+	decodeHistoryPayloads,
+	getClientPayloadCodecs,
+} from './history-payloads.ts';
 
 function toNumberOrNull(value: unknown): number | null {
 	return value === null || value === undefined ? null : Number(value);
@@ -376,7 +380,10 @@ export async function getWorkflowExecutionHistoryReverse(
 	}));
 
 	return {
-		events,
+		events: await decodeHistoryPayloads(
+			events,
+			getClientPayloadCodecs(client),
+		),
 		nextPageToken: response.nextPageToken?.length
 			? Buffer.from(response.nextPageToken).toString('base64')
 			: null,

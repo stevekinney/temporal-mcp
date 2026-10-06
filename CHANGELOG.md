@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Remote codec support** — profiles accept a `codecEndpoint` pointing at a [remote codec server](https://docs.temporal.io/production-deployment/data-encryption), wired into the Temporal client as a `PayloadCodec` so client-side-encrypted payloads decode for workflow results, queries, describes and histories. Endpoints on private networks are refused unless listed in `security.codecAllowlist`, and each request is bounded by the new `security.codecTimeoutMs` setting (default `5000`).
+
+---
+
 ## [0.2.1] — 2026-03-24
 
 ### Added

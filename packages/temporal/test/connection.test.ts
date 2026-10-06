@@ -1,5 +1,9 @@
-import { describe, expect, test } from 'bun:test';
-import { TemporalConnectionManager } from '../src/connection.ts';
+import { describe, expect, mock, test } from 'bun:test';
+import {
+	TemporalConnectionManager,
+	createCodecDataConverter,
+} from '../src/connection.ts';
+import { RemotePayloadCodec } from '../src/payload-codec.ts';
 import type {
 	TemporalConfig,
 	TemporalProfileConfig,
@@ -141,5 +145,100 @@ describe('TemporalConnectionManager.getProfileConfiguration', () => {
 			expect(envelope.error.message).toContain('nonexistent');
 			expect(envelope.error.message).toContain('local');
 		}
+	});
+});
+
+describe('createCodecDataConverter', () => {
+	const profile: TemporalProfileConfig = {
+		kind: 'self-hosted',
+		address: 'localhost:7233',
+		namespace: 'default',
+	};
+
+	test('returns no converter when the profile has no codec endpoint', () => {
+		expect(createCodecDataConverter(profile)).toBeUndefined();
+	});
+
+	test('installs a remote codec when the profile names an endpoint', () => {
+		const converter = createCodecDataConverter({
+			...profile,
+			codecEndpoint: 'https://codec.example.com',
+		});
+
+		expect(converter?.payloadCodecs).toHaveLength(1);
+		expect(converter?.payloadCodecs?.[0]).toBeInstanceOf(
+			RemotePayloadCodec,
+		);
+	});
+
+	test('passes the security allowlist through to the codec', async () => {
+		const endpoint = 'http://localhost:8080';
+		const converter = createCodecDataConverter(
+			{ ...profile, codecEndpoint: endpoint },
+			{ codecAllowlist: [endpoint] },
+		);
+		const codec = converter!.payloadCodecs![0]!;
+
+		const originalFetch = globalThis.fetch;
+		const fetchMock = mock(async (_url: string, _init?: unknown) =>
+			Response.json({ payloads: [{ metadata: {}, data: '' }] }),
+		);
+		globalThis.fetch = fetchMock as any;
+
+		try {
+			await codec.decode([
+				{
+					metadata: {
+						encoding: new TextEncoder().encode('binary/encrypted'),
+					},
+					data: new Uint8Array([1]),
+				},
+			]);
+		} finally {
+			globalThis.fetch = originalFetch;
+		}
+
+		expect(fetchMock).toHaveBeenCalled();
+		expect(fetchMock.mock.calls[0]![0]).toBe(`${endpoint}/decode`);
+	});
+
+	test('rejects a private codec endpoint that is not allowlisted', async () => {
+		const converter = createCodecDataConverter({
+			...profile,
+			codecEndpoint: 'http://localhost:8080',
+		});
+		const codec = converter!.payloadCodecs![0]!;
+
+		await expect(
+			codec.decode([
+				{
+					metadata: {
+						encoding: new TextEncoder().encode('binary/encrypted'),
+					},
+					data: new Uint8Array([1]),
+				},
+			]),
+		).rejects.toThrow(/private address/);
+	});
+});
+
+describe('TemporalConnectionManager codec configuration', () => {
+	test('keeps codec security options optional', () => {
+		const config: TemporalConfig = {
+			defaultProfile: 'local',
+			profiles: {
+				local: {
+					kind: 'self-hosted',
+					address: 'localhost:7233',
+					namespace: 'default',
+					codecEndpoint: 'https://codec.example.com',
+				},
+			},
+		};
+
+		const manager = new TemporalConnectionManager(config);
+		expect(manager.getProfileConfiguration().codecEndpoint).toBe(
+			'https://codec.example.com',
+		);
 	});
 });
